@@ -1,0 +1,11 @@
+dist/
+target/
+src-tauri/target/
+src-tauri/gen/
+src-tauri/icons/
+package-lock.json
+Cargo.lock
+*.rs
+*.toml
+LICENSE
+SPEC.md

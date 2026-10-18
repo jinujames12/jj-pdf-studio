@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = ["crates/pdf-core", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["JJ Global"]
+repository = "https://github.com/jjglobal/jj-pdf-studio"
+
+# Small, self-contained release binary (see SPEC section 6).
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

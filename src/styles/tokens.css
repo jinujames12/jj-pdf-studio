@@ -1,0 +1,178 @@
+/*
+ * Design tokens for JJ PDF Studio (SPEC section 4).
+ * Light is the default. Dark applies via [data-theme='dark'], which
+ * src/lib/stores/theme.svelte.ts always sets (resolved from the OS unless the
+ * user picked a theme manually), so there is one source of truth for dark.
+ */
+
+/* Inter, bundled locally (OFL-1.1). Only the Latin subsets are shipped. */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Brand scale (derived from #2C388E) */
+  --brand-50: #eef0fa;
+  --brand-100: #d5d9f1;
+  --brand-300: #8c95d6;
+  --brand-500: #3f4db8;
+  --brand-600: #2c388e;
+  --brand-700: #232d72;
+  --brand-800: #1a2256;
+
+  /* Semantic colours */
+  --primary: #2c388e;
+  --on-primary: #ffffff;
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef0f6;
+  --border: #dde1ec;
+  --text: #161a2e;
+  --text-muted: #5b6178;
+  --success: #1f8a5b;
+  --warning: #b7791f;
+  --danger: #c2353a;
+
+  /* Derived interactive colours */
+  --primary-hover: var(--brand-700);
+  --primary-pressed: var(--brand-800);
+  --focus-ring: var(--brand-500);
+  --selected-bg: var(--brand-50);
+  --hover-bg: rgb(22 26 46 / 5%);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgb(22 26 46 / 6%), 0 2px 8px rgb(22 26 46 / 6%);
+  --shadow-card-hover: 0 2px 4px rgb(22 26 46 / 8%), 0 6px 16px rgb(22 26 46 / 10%);
+  --shadow-dialog: 0 8px 32px rgb(22 26 46 / 18%), 0 2px 8px rgb(22 26 46 / 10%);
+
+  /* Spacing: 4px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius */
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-thumb: 4px;
+
+  /* Type */
+  --font-sans:
+    'Inter Variable', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --text-body: 13px;
+  --text-caption: 12px;
+  --text-header: 15px;
+  --text-title: 20px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout */
+  --titlebar-height: 44px;
+  --sidebar-width: 220px;
+  --sidebar-width-collapsed: 64px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --primary: #7d88e0;
+  --on-primary: #0e1330;
+  --bg: #0f1220;
+  --surface: #181c2e;
+  --surface-2: #22273d;
+  --border: #2e3450;
+  --text: #e8eaf4;
+  --text-muted: #9aa0b8;
+  --success: #3cc48a;
+  --warning: #e3a948;
+  --danger: #f0686c;
+
+  --primary-hover: #939df0;
+  --primary-pressed: var(--brand-300);
+  --focus-ring: var(--brand-300);
+  --selected-bg: rgb(125 136 224 / 16%);
+  --hover-bg: rgb(232 234 244 / 6%);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 30%), 0 2px 8px rgb(0 0 0 / 24%);
+  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 36%), 0 6px 16px rgb(0 0 0 / 34%);
+  --shadow-dialog: 0 8px 32px rgb(0 0 0 / 50%), 0 2px 8px rgb(0 0 0 / 30%);
+}
+
+/* Reset and base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* the app is a fixed shell; panels scroll on their own */
+  user-select: none; /* desktop app, not a document */
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Calm scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
