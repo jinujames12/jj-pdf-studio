@@ -1,8 +1,8 @@
 # JJ PDF Studio: Project Specification
 
-**Version:** 0.1 (planning draft) · **Date:** 2026-10-18 · **Owner:** JJ Global
+**Version:** 0.2 (adds security, convert and edit tools) · **Date:** 2026-10-19 · **Owner:** JJ Global
 
-A free, open source, offline Windows desktop tool for everyday PDF work: merge, split, extract, reorder, rotate, delete and insert pages, resize pages, compress, and turn images into a PDF. It ships as one portable `.exe` that runs without installation.
+A free, open source, offline Windows desktop tool for everyday PDF work: merge, split, extract, reorder, rotate, delete and insert pages, resize pages, compress, convert between images and PDF, unlock and password-protect, add page numbers and watermarks, and edit document properties. It ships as one portable `.exe` that runs without installation.
 
 ---
 
@@ -22,7 +22,9 @@ A free, open source, offline Windows desktop tool for everyday PDF work: merge, 
 
 - Editing text or images inside a page, annotations, form filling, digital signatures.
 - OCR, PDF/A conversion, conversion to or from Word/Excel.
-- Password protection and removal (planned for v1.x, see milestones).
+- Recovering or guessing unknown passwords. Unlock works only when the PDF opens without a password or the user types the password.
+- OCR (making scanned PDFs searchable). Planned for v1.x using the OCR engine built into Windows 10/11.
+- True redaction, digital signatures and PDF to Word. These are hard to do safely and are left out on purpose.
 - macOS and Linux builds (Tauri makes them possible later, but they are not tested or supported in v1).
 - Cloud sync, accounts, auto-update.
 
@@ -53,6 +55,7 @@ A free, open source, offline Windows desktop tool for everyday PDF work: merge, 
 | Image decode/encode/resize     | `image` (with `jpeg`, `png` features) | MIT / Apache-2.0 |
 | Errors, serialisation          | `thiserror`, `anyhow`, `serde`        | MIT / Apache-2.0 |
 | Parallel work                  | `rayon`                               | MIT / Apache-2.0 |
+| AES-256 encryption (only if lopdf lacks it) | RustCrypto `aes`, `cbc`, `sha2`, `rand` | MIT / Apache-2.0 |
 | Thumbnail rendering (frontend) | `pdfjs-dist` (Mozilla pdf.js)         | Apache-2.0       |
 | UI framework                   | Svelte 5 + Vite + TypeScript          | MIT              |
 | Drag-and-drop sorting          | `sortablejs`                          | MIT              |
@@ -171,6 +174,12 @@ jj-pdf-studio/
 │  ▣ Resize    │                                                     │
 │  ▣ Compress  │        Drop PDFs here or click to browse            │
 │  ▣ Images→PDF│                                                     │
+│  ▣ PDF→Images│                                                     │
+│  ▣ Unlock    │                                                     │
+│  ▣ Protect   │                                                     │
+│  ▣ Page nos. │                                                     │
+│  ▣ Watermark │                                                     │
+│  ▣ Properties│                                                     │
 │              ├─────────────────────────────────────────────────────┤
 │  ⓘ About     │  Options panel (tool-specific)   12 pages · 3.4 MB  │  footer / options
 └──────────────┴────────────────────────────────────────────────────┘
@@ -181,7 +190,8 @@ jj-pdf-studio/
 - **Options panel:** tool-specific settings at the bottom (or right on wide screens ≥ 1400 px).
 - **Primary action** always top right in brand colour: "Save merged PDF", "Split", "Compress".
 - **Home screen** (no file open): a grid of tool cards with icon, name and one-line description, plus a big drop zone. Drop a file anywhere and it opens in the Pages tool by default.
-- **Feedback:** progress bar in the tool header during jobs with Cancel; success toast with "Open file" and "Show in folder" buttons; errors in plain language ("This PDF is password protected. Password support is coming in a later version.").
+- **Feedback:** progress bar in the tool header during jobs with Cancel; success toast with "Open file" and "Show in folder" buttons; errors in plain language ("This PDF needs a password to open. Enter it to continue.").
+- **Sidebar grouping:** with 14 tools, group them under small headings: _Organise_ (Merge, Pages, Split, Extract, Rotate), _Convert_ (Images to PDF, PDF to Images), _Optimise_ (Resize, Compress), _Security_ (Unlock, Protect), _Edit_ (Page numbers, Watermark, Properties).
 - **Keyboard:** Ctrl+O open, Ctrl+S save, Ctrl+Z / Ctrl+Y undo/redo, Delete removes selected pages, Ctrl+A select all, R / Shift+R rotate right/left, arrows move selection.
 - **Window:** min 960×640, remembers size and position and last theme in `%APPDATA%\JJPDFStudio\settings.json` (portable mode: if a file named `portable` sits next to the exe, settings live beside the exe instead).
 
@@ -229,7 +239,7 @@ Brand primary is **`#2C388E`** (deep indigo). The scale below is derived from it
 
 ## 5. Feature behaviour
 
-All tools: input via drag-and-drop or file dialog; output via a Save dialog prefilled with a suggested name in the source folder; never overwrite the source (if the user picks the source path, show "Choose a different name, the original is kept safe"). Encrypted PDFs that need a password are refused with a clear message. Damaged PDFs: lopdf tries to recover the xref; if it fails, show "This file looks damaged and could not be opened."
+All tools: input via drag-and-drop or file dialog; output via a Save dialog prefilled with a suggested name in the source folder; never overwrite the source (if the user picks the source path, show "Choose a different name, the original is kept safe"). Encrypted PDFs that need a password to open prompt for it (see 5.9); PDFs that open freely but carry restrictions load normally in every tool. Damaged PDFs: lopdf tries to recover the xref; if it fails, show "This file looks damaged and could not be opened."
 
 ### 5.1 Merge
 
@@ -317,7 +327,54 @@ Three presets plus a details panel.
 - Output: one PDF (default) or one PDF per image.
 - Implementation: JPEGs are embedded directly as `DCTDecode` streams with no re-encoding (fast, no quality loss). PNG and others are decoded and stored as Flate-compressed RGB, with alpha split into an `/SMask`. EXIF orientation is honoured.
 
-### 5.9 About
+### 5.9 Unlock (remove password and restrictions)
+
+PDFs can carry two kinds of protection, and the tool explains which one a file has:
+
+- **Open password (user password):** the file can't be viewed without it. The user types the password; the tool decrypts and saves an unprotected copy. There is no guessing or cracking.
+- **Restrictions only (owner password):** the file opens freely but blocks copying, printing or editing. This is the usual reason text can't be copied. Because the file is readable without a password, the tool can decrypt it and save a copy with no restrictions, without asking for the owner password.
+- Before saving, show one line: "Only remove protection from files you own or have permission to change."
+- **Copying still fails on some files after unlocking**, and the tool should say why when it detects it:
+  - **Scanned PDFs** are pictures of text, so there is no text to copy. Detect pages with no text operators and one full-page image, and suggest OCR (v1.x).
+  - **Fonts without a Unicode map** (missing `/ToUnicode`) copy as garbled characters. Only OCR fixes that.
+- Implementation: `lopdf` decrypts standard security handler files (RC4 40/128-bit, AES-128, AES-256). Check AES-256 (revision 6) support in the pinned lopdf version at M6 start; if it's missing, add it with the RustCrypto crates. Save without `/Encrypt`.
+
+### 5.10 Protect (add password)
+
+- Set an open password, and optionally restrictions (disallow printing, copying, editing) with a separate owner password.
+- Always AES-256 (PDF 2.0 / revision 6); no RC4 or 40-bit options, because those are easy to break.
+- Password entered twice; a strength hint; a clear warning that a forgotten password cannot be recovered by this tool.
+- Implementation: use lopdf's encryption if the pinned version supports AES-256 writing; otherwise implement the revision 6 security handler with RustCrypto `aes`, `cbc`, `sha2` and `rand` (all MIT/Apache-2.0). Test that output opens in Edge, Chrome and Acrobat Reader.
+
+### 5.11 PDF to Images
+
+- Export all pages or a selection as PNG (default) or JPG (quality slider, default 85).
+- Resolution: 72, 150 (default), 300 DPI, or custom.
+- Output to a folder as `name_p001.png`, or one ZIP file.
+- Implementation: render with pdf.js in the frontend (already bundled, no extra size) to an offscreen canvas at the target DPI, encode to PNG/JPG blobs, and send bytes to Rust to write. Render one page at a time to keep memory low.
+
+### 5.12 Page numbers
+
+- Position: 6 spots (top/bottom × left/centre/right), margin, font size, colour.
+- Format: `1`, `Page 1`, `Page 1 of N`, `1 / N`, or custom text with `{n}` and `{total}`.
+- Start number and page range (for example skip the cover page).
+- Implementation: append a small content stream per page drawing text with a standard 14 font (Helvetica), which needs no font embedding. Position computed from the page's effective box and `/Rotate`.
+
+### 5.13 Watermark / stamp
+
+- **Text watermark:** text, font size, colour, opacity, rotation (default 45°), position (centre or tiled), over or under page content.
+- **Image stamp:** a PNG or JPG (for example the JJ Global logo), size, opacity, position (corners or centre).
+- Page range.
+- Implementation: a Form XObject per watermark, drawn on each page from an extra content stream; opacity via an `/ExtGState` with `/ca`. "Under content" prepends the stream instead of appending it.
+- Note in the UI: a watermark added this way can be removed by someone with PDF editing tools. It is a visible label, not security.
+
+### 5.14 Properties (metadata)
+
+- View and edit title, author, subject, keywords, creator; view producer, PDF version, page count, page sizes, encryption status, file size.
+- "Remove all metadata" button for privacy before sharing (clears `/Info` and the XMP `/Metadata` stream).
+- Implementation: direct `/Info` dictionary edit in lopdf; XMP is removed rather than edited in v1.
+
+### 5.15 About
 
 - Logo, "JJ PDF Studio", version and build date, "Made by JJ Global", links to GitHub repo and issue tracker (open in default browser), license name, and a "Third-party licenses" button showing the bundled notices.
 
@@ -455,7 +512,7 @@ Release process: update `CHANGELOG.md` and the version in `package.json`, `src-t
 
 1. Logo, name, one-line tagline ("Free, offline PDF tools for Windows."), badges (CI, release, license).
 2. Screenshot / GIF of the main window.
-3. Features list (the eight tools).
+3. Features list (all 14 tools, grouped as in the sidebar).
 4. **Download:** link to latest release; portable exe vs installer; system requirements (Windows 10 1809+/11 x64); SmartScreen note.
 5. **Privacy:** fully offline, no telemetry, never overwrites originals.
 6. Usage quick start (3 or 4 steps with screenshots).
@@ -489,8 +546,10 @@ Release process: update `CHANGELOG.md` and the version in `package.json`, `src-t
 | **M3: Merge, Split, Extract, Rotate** | Merge with file/page view and bookmarks; split modes; extract; rotate tool                                                                                          | Integration tests for each; 20-file merge works                                                           |
 | **M4: Images to PDF, Resize**         | Images tool with all options and EXIF; resize with fit/fill/size-only and annotation transform                                                                      | Visual checks on mixed-size documents                                                                     |
 | **M5: Compress**                      | Lossless pipeline, image recompression presets, never-larger guarantee, result dialog                                                                               | Benchmarked on a set of scans, office exports and text PDFs; results in README                            |
-| **M6: Polish and v1.0**               | Progress and cancel everywhere, keyboard shortcuts, About and third-party notices, real logo, README screenshots, accessibility pass, code signing (if approved)    | v1.0.0 release published                                                                                  |
-| **v1.x**                              | Password protect / remove (lopdf encryption), PDF to images (render via pdf.js, save PNG/JPG), watermark/stamp with logo, page numbers                              |                                                                                                           |
+| **M6: Security**                      | Unlock (open password and restrictions, scanned-page detection), Protect (AES-256), password prompt when opening files in any tool                                  | Round-trip tests with RC4, AES-128 and AES-256 fixtures; output opens in Edge, Chrome, Acrobat Reader    |
+| **M7: Convert and edit**              | PDF to Images, Page numbers, Watermark (text and image), Properties                                                                                                 | Visual checks on rotated and mixed-size pages                                                             |
+| **M8: Polish and v1.0**               | Sidebar grouping, progress and cancel everywhere, keyboard shortcuts, About and third-party notices, real logo, README screenshots, accessibility pass, code signing (if approved) | v1.0.0 release published                                                                  |
+| **v1.x**                              | OCR for scanned PDFs using the Windows built-in OCR engine (`Windows.Media.Ocr` via the `windows` crate, no download, adds an invisible text layer), N-up and booklet printing, flatten forms, reverse or interleave pages (for double-sided scans) |                                                                  |
 | **v2 ideas**                          | Font subsetting in compress, ARM64 build, translations, command-line mode reusing `pdf-core`                                                                        |                                                                                                           |
 
 ---
