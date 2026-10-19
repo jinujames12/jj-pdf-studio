@@ -4,6 +4,6 @@ import { initTheme } from './lib/stores/theme.svelte';
 import App from './App.svelte';
 
 // Set data-theme before the first paint so there is no light/dark flash.
-initTheme();
+await initTheme();
 
 mount(App, { target: document.getElementById('app')! });

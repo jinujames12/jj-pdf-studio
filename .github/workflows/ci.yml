@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
-        with: { components: "clippy, rustfmt" }
+        with: { components: 'clippy, rustfmt' }
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
       - run: npm run lint && npm run check # eslint + prettier + svelte-check

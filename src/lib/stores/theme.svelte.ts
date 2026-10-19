@@ -1,22 +1,14 @@
 // Theme: follows the OS unless the user picks one with the toggle.
-// The manual choice lives in localStorage for now (moves to settings.json in M1).
+// The manual choice is stored in settings.json by the Rust side.
+import { errorMessage, getSettings, inTauri, setThemeSetting } from '../api';
+import { toast } from './toast.svelte';
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'jj-pdf-studio.theme';
 const osQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-function readStored(): Theme | null {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return v === 'light' || v === 'dark' ? v : null;
-  } catch {
-    return null; // storage can be unavailable; fall back to the OS
-  }
-}
-
 const state = $state<{ manual: Theme | null; os: Theme }>({
-  manual: readStored(),
+  manual: null,
   os: osQuery.matches ? 'dark' : 'light'
 });
 
@@ -34,15 +26,24 @@ function apply() {
 /** Flip between light and dark and remember the choice. */
 export function toggleTheme() {
   state.manual = theme.current === 'dark' ? 'light' : 'dark';
-  try {
-    localStorage.setItem(STORAGE_KEY, state.manual);
-  } catch {
-    // Ignore: the choice just won't persist.
-  }
   apply();
+  if (inTauri()) {
+    setThemeSetting(state.manual).catch((e) => toast('error', errorMessage(e)));
+  }
 }
 
-export function initTheme() {
+/**
+ * Applies the saved theme. Awaited before the app mounts so a saved dark theme
+ * on a light Windows does not flash; a missing settings file just follows the OS.
+ */
+export async function initTheme() {
+  if (inTauri()) {
+    try {
+      state.manual = (await getSettings()).theme;
+    } catch {
+      // Unreadable settings: follow the OS.
+    }
+  }
   apply();
   // Keep following Windows when the user has not chosen manually.
   osQuery.addEventListener('change', (e) => {
