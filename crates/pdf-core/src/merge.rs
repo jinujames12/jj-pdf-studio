@@ -4,6 +4,7 @@
 //! resolves inherited page attributes. Its objects are then renumbered so they
 //! cannot collide with the other inputs and grafted under one new page tree.
 
+use crate::progress::{step, Progress, Silent};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -39,6 +40,10 @@ struct Part {
 const MAX_SIBLINGS: usize = 100_000;
 
 pub fn merge(inputs: &[MergeInput], bookmarks: bool) -> Result<Document> {
+    merge_with(inputs, bookmarks, &Silent)
+}
+
+fn merge_with(inputs: &[MergeInput], bookmarks: bool, progress: &dyn Progress) -> Result<Document> {
     if inputs.is_empty() {
         return Err(Error::NoInputs);
     }
@@ -47,7 +52,13 @@ pub fn merge(inputs: &[MergeInput], bookmarks: bool) -> Result<Document> {
     let mut pages: Vec<ObjectId> = Vec::new();
     let mut parts: Vec<Part> = Vec::new();
 
-    for input in inputs {
+    for (i, input) in inputs.iter().enumerate() {
+        step(
+            progress,
+            i as u32,
+            inputs.len() as u32,
+            &format!("Reading file {} of {}", i + 1, inputs.len()),
+        )?;
         let mut doc = document::load(&input.path)?;
         let ops = match &input.pages {
             Some(ops) => ops.clone(),
@@ -111,10 +122,21 @@ pub fn merge(inputs: &[MergeInput], bookmarks: bool) -> Result<Document> {
 /// Merges `inputs` and writes the result to `output`, which must not be one of
 /// the inputs. Returns the size of the written file in bytes.
 pub fn merge_files(inputs: &[MergeInput], output: &Path, bookmarks: bool) -> Result<u64> {
+    merge_files_with(inputs, output, bookmarks, &Silent)
+}
+
+/// Like [`merge_files`], reporting progress and stopping if cancelled.
+pub fn merge_files_with(
+    inputs: &[MergeInput],
+    output: &Path,
+    bookmarks: bool,
+    progress: &dyn Progress,
+) -> Result<u64> {
     if let Some(input) = inputs.iter().find(|i| same_file(&i.path, output)) {
         return Err(Error::OutputIsSource(input.path.clone()));
     }
-    let mut doc = merge(inputs, bookmarks)?;
+    let mut doc = merge_with(inputs, bookmarks, progress)?;
+    step(progress, inputs.len() as u32, inputs.len() as u32, "Saving")?;
     write_atomic(&mut doc, output)
 }
 

@@ -121,13 +121,28 @@
     {/if}
     {#if !readonly}
       <div class="actions">
-        <button class="thumb-btn" title="Rotate left (Shift+R)" onclick={() => onrotate?.(-90)}>
+        <button
+          class="thumb-btn"
+          title="Rotate left (Shift+R)"
+          aria-label="Rotate page {position} left"
+          onclick={() => onrotate?.(-90)}
+        >
           <RotateCcw size={14} strokeWidth={1.75} />
         </button>
-        <button class="thumb-btn" title="Rotate right (R)" onclick={() => onrotate?.(90)}>
+        <button
+          class="thumb-btn"
+          title="Rotate right (R)"
+          aria-label="Rotate page {position} right"
+          onclick={() => onrotate?.(90)}
+        >
           <RotateCw size={14} strokeWidth={1.75} />
         </button>
-        <button class="thumb-btn danger" title="Delete (Del)" onclick={ondelete}>
+        <button
+          class="thumb-btn danger"
+          title="Delete (Del)"
+          aria-label="Delete page {position}"
+          onclick={ondelete}
+        >
           <Trash2 size={14} strokeWidth={1.75} />
         </button>
       </div>

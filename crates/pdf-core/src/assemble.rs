@@ -2,6 +2,7 @@
 //! path behind reorder, rotate, delete and insert-blank: the UI edits a list
 //! and nothing touches the PDF until Save.
 
+use crate::progress::{step, Progress, Silent};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -163,11 +164,24 @@ pub fn same_file(source: &Path, output: &Path) -> bool {
 /// Loads `source`, applies `ops` and writes the result to `output`, which must
 /// not be the source file. Returns the size of the written file in bytes.
 pub fn save_pages(source: &Path, output: &Path, ops: &[PageOp]) -> Result<u64> {
+    save_pages_with(source, output, ops, &Silent)
+}
+
+/// Like [`save_pages`], reporting progress and stopping if cancelled.
+pub fn save_pages_with(
+    source: &Path,
+    output: &Path,
+    ops: &[PageOp],
+    progress: &dyn Progress,
+) -> Result<u64> {
     if same_file(source, output) {
         return Err(Error::OutputIsSource(output.to_path_buf()));
     }
+    step(progress, 0, 3, "Reading the document")?;
     let mut doc = document::load(source)?;
+    step(progress, 1, 3, "Arranging pages")?;
     assemble(&mut doc, ops)?;
+    step(progress, 2, 3, "Saving")?;
     write_atomic(&mut doc, output)
 }
 

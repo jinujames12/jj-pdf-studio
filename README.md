@@ -13,21 +13,42 @@
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue" /></a>
 </p>
 
-<!-- TODO: screenshot or GIF of the main window -->
-
-> **Status:** early development (milestone M0, the app shell). The PDF tools below are planned
-> and not implemented yet.
+<!-- The images are placeholders; see docs/screenshots/README.md for how to replace them. -->
+<p align="center">
+  <img src="docs/screenshots/main-window.svg" alt="The JJ PDF Studio home screen with the tool grid" width="720" />
+</p>
 
 ## Features
 
-- **Merge** several PDFs into one
-- **Pages**: reorder, rotate, delete and insert blank pages
+**Organise**
+
+- **Merge** several PDFs into one, with optional bookmarks
+- **Pages**: reorder, rotate, delete and insert blank pages, with undo and redo
 - **Split** a PDF by page count, ranges or markers
 - **Extract** selected pages
 - **Rotate** all or some pages, losslessly
+
+**Convert**
+
+- **Images to PDF** (JPG, PNG, BMP, GIF, TIFF, WebP)
+- **PDF to Images** (PNG or JPG, to a folder or a ZIP file)
+
+**Optimise**
+
 - **Resize** pages to A4, Letter and other sizes
 - **Compress** to shrink file size (lossless, balanced or strong)
-- **Images to PDF**
+
+**Security**
+
+- **Unlock**: remove an open password or restrictions
+- **Protect**: lock a PDF with a password (AES-256)
+
+**Edit**
+
+- **Page numbers**, **Watermark** (text or picture) and **Properties** (metadata)
+
+Every long job shows a progress bar with a **Cancel** button (or press Esc). Press **F1** in the
+app for the keyboard shortcuts.
 
 ## Download
 
@@ -51,7 +72,15 @@ SHA-256 checksums published with each release.
 
 ## Usage
 
-TODO: a quick start with three or four steps and screenshots.
+1. Pick a tool in the sidebar, or drop a PDF anywhere on the window.
+2. Make your changes. Nothing is written until you save.
+3. Press **Save** (Ctrl+S) and choose a file name. The original is never overwritten.
+4. Use **Open file** or **Show in folder** in the message that appears.
+
+<p align="center">
+  <img src="docs/screenshots/pages.svg" alt="The Pages tool with a few pages selected" width="480" />
+  <img src="docs/screenshots/dark-theme.svg" alt="A tool in the dark theme" width="480" />
+</p>
 
 ## Limitations
 
@@ -103,6 +132,7 @@ TODO: link to the milestones / GitHub Projects board.
 Code: [Apache-2.0](LICENSE). The JJ name and logo are not covered by that license; see
 [TRADEMARKS.md](TRADEMARKS.md) and [assets/brand/LICENSE.md](assets/brand/LICENSE.md).
 
-Third-party licenses: TODO (a `THIRD_PARTY_NOTICES.md` will be generated in CI).
+Third-party licenses: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), also shown in the app
+under **About**. Regenerate it with `npm run notices` after changing dependencies.
 
 Made by James & James LLP.

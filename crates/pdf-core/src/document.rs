@@ -1,6 +1,8 @@
 //! Loading documents and reading page geometry.
 
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
 use lopdf::{Dictionary, Document, Object, ObjectId};
 use serde::Serialize;
@@ -29,10 +31,64 @@ pub struct DocInfo {
     pub pages: Vec<PageInfo>,
 }
 
-/// Loads a PDF, refusing password-protected files and mapping parse failures
-/// to a friendly "damaged" error.
+/// Passwords the user has typed this session, by canonical path, so every tool
+/// can open a protected file after it was unlocked once. Memory only.
+fn passwords() -> &'static Mutex<HashMap<PathBuf, String>> {
+    static PASSWORDS: OnceLock<Mutex<HashMap<PathBuf, String>>> = OnceLock::new();
+    PASSWORDS.get_or_init(Mutex::default)
+}
+
+fn password_key(path: &Path) -> PathBuf {
+    path.canonicalize().unwrap_or_else(|_| path.to_path_buf())
+}
+
+fn remembered_password(path: &Path) -> Option<String> {
+    passwords()
+        .lock()
+        .unwrap()
+        .get(&password_key(path))
+        .cloned()
+}
+
+/// Checks `password` against `path` and, when it opens the file, remembers it
+/// so `load` (and so every tool) can open the file from now on. Files that need
+/// no password succeed without remembering anything.
+pub fn unlock_for_session(path: &Path, password: &str) -> Result<()> {
+    load_with(path, Some(password))?;
+    passwords()
+        .lock()
+        .unwrap()
+        .insert(password_key(path), password.to_owned());
+    Ok(())
+}
+
+/// Loads a PDF, using the password remembered by `unlock_for_session` if any.
+/// Files that need a password nobody has supplied give `Error::Encrypted`;
+/// parse failures give a friendly "damaged" error.
 pub fn load(path: &Path) -> Result<Document> {
-    match Document::load(path) {
+    let remembered = remembered_password(path);
+    match load_with(path, remembered.as_deref()) {
+        // The file changed under us; forget the stale password and ask again.
+        Err(Error::WrongPassword) => {
+            passwords().lock().unwrap().remove(&password_key(path));
+            Err(Error::Encrypted)
+        }
+        other => other,
+    }
+}
+
+/// Like `load`, with an explicit password (`None` for files that open freely).
+/// The returned document is decrypted and carries no `/Encrypt` entry.
+pub fn load_with(path: &Path, password: Option<&str>) -> Result<Document> {
+    let loaded = match password {
+        Some(pw) if !pw.is_empty() => {
+            refuse_legacy_owner_password(path, pw)?;
+            Document::load_with_password(path, pw)
+        }
+        Some(_) => Document::load(path),
+        None => Document::load(path),
+    };
+    match loaded {
         Ok(doc) => {
             if doc.is_encrypted() {
                 return Err(Error::Encrypted);
@@ -43,6 +99,10 @@ pub fn load(path: &Path) -> Result<Document> {
             Ok(doc)
         }
         Err(lopdf::Error::IO(e)) => Err(Error::Io(e)),
+        Err(lopdf::Error::InvalidPassword)
+        | Err(lopdf::Error::Decryption(lopdf::encryption::DecryptionError::IncorrectPassword)) => {
+            Err(Error::WrongPassword)
+        }
         Err(_) => {
             // Tell password-protected files apart from broken ones by looking
             // for the /Encrypt marker.
@@ -54,6 +114,45 @@ pub fn load(path: &Path) -> Result<Document> {
             }
         }
     }
+}
+
+/// lopdf accepts the owner password of RC4 and AES-128 files (revisions 2 to 4)
+/// but then derives the file key from it as if it were the open password, which
+/// silently produces garbage. Refuse that case with a clear message instead.
+/// Revision 6 files decrypt correctly with either password.
+fn refuse_legacy_owner_password(path: &Path, password: &str) -> Result<()> {
+    let Ok(doc) = Document::load(path) else {
+        return Ok(()); // the real load reports the problem
+    };
+    if !doc.is_encrypted() {
+        return Ok(());
+    }
+    let revision = doc
+        .get_encrypted()
+        .and_then(|d| d.get(b"R"))
+        .and_then(Object::as_i64)
+        .unwrap_or(6);
+    if revision <= 4 && doc.authenticate_user_password(password).is_err() {
+        return Err(if doc.authenticate_owner_password(password).is_ok() {
+            Error::OwnerPasswordOnly
+        } else {
+            Error::WrongPassword
+        });
+    }
+    Ok(())
+}
+
+/// The bytes of a PDF that any viewer can open: the file itself, or, when the
+/// user unlocked it with a password this session, a decrypted copy made in
+/// memory (nothing is written to disk).
+pub fn viewable_bytes(path: &Path) -> Result<Vec<u8>> {
+    if remembered_password(path).is_none() {
+        return Ok(std::fs::read(path)?);
+    }
+    let mut doc = load(path)?;
+    let mut bytes = Vec::new();
+    doc.save_to(&mut bytes)?;
+    Ok(bytes)
 }
 
 /// Reads page count and per-page geometry.

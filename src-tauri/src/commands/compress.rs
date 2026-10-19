@@ -4,10 +4,11 @@ use std::path::PathBuf;
 
 use pdf_core::{CompressOptions, CompressReport};
 use serde::Serialize;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use super::pages::require_pdf_extension;
 use super::{canonical, Allowed};
+use crate::jobs::{self, Jobs};
 
 /// Outcome of a compression run. `path` is set only when a smaller file was
 /// written; otherwise the original should simply be kept.
@@ -25,17 +26,18 @@ pub async fn compress_pdf(
     source: PathBuf,
     output: PathBuf,
     options: CompressOptions,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<Compressed, String> {
     let source = allowed.check_opened(&source)?;
     require_pdf_extension(&output)?;
     let out = output.clone();
-    let report = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::compress_file(&source, &out, &options)
+    let report = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::compress_file_with(&source, &out, &options, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     if !report.written {
         return Ok(Compressed { path: None, report });
     }

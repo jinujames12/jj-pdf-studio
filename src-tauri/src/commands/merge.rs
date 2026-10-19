@@ -3,10 +3,11 @@
 use std::path::PathBuf;
 
 use pdf_core::MergeInput;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use super::pages::{require_pdf_extension, SavedFile};
 use super::{canonical, Allowed};
+use crate::jobs::{self, Jobs};
 
 /// Merges the listed files (or chosen pages of them) into a new PDF.
 #[tauri::command]
@@ -14,6 +15,9 @@ pub async fn merge_pdfs(
     mut inputs: Vec<MergeInput>,
     output: PathBuf,
     bookmarks: bool,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<SavedFile, String> {
     for input in &mut inputs {
@@ -21,12 +25,10 @@ pub async fn merge_pdfs(
     }
     require_pdf_extension(&output)?;
     let out = output.clone();
-    let size = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::merge_files(&inputs, &out, bookmarks)
+    let size = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::merge_files_with(&inputs, &out, bookmarks, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     let output = canonical(&output)?;
     allowed.allow_saved(output.clone());
     Ok(SavedFile {

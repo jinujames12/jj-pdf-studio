@@ -5,10 +5,22 @@ use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("This PDF is password protected. Password support is coming in a later version.")]
+    #[error("This PDF is password protected. Enter its password to open it.")]
     Encrypted,
+    #[error("That password is not correct.")]
+    WrongPassword,
+    #[error("That is this file's owner password, which only works for changing its restrictions. Enter the password that opens the file instead.")]
+    OwnerPasswordOnly,
+    #[error("This PDF has no password or restrictions to remove.")]
+    NotProtected,
+    #[error("Enter a password to open the protected file.")]
+    NoPassword,
+    #[error("To restrict printing, copying or editing, enter an owner password that is different from the open password.")]
+    BadOwnerPassword,
     #[error("This file looks damaged and could not be opened.")]
     Damaged,
+    #[error("Cancelled.")]
+    Cancelled,
     #[error("Choose a different name, the original is kept safe.")]
     OutputIsSource(PathBuf),
     #[error("At least one page must remain.")]
@@ -39,6 +51,10 @@ pub enum Error {
     BadPageSize,
     #[error("The margin must be zero or more, and small enough to leave room on the page.")]
     BadMargin,
+    #[error("The text contains \"{0}\", which the standard PDF font cannot draw. Use letters from the Latin alphabet, digits and common punctuation.")]
+    UnsupportedText(char),
+    #[error("{0}")]
+    BadOption(&'static str),
     #[error("Could not read or write the file: {0}")]
     Io(#[from] std::io::Error),
     #[error("The PDF could not be processed: {0}")]

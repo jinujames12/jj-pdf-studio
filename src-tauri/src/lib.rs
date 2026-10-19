@@ -2,6 +2,7 @@
 //! and delegate to `pdf-core`.
 
 mod commands;
+mod jobs;
 mod settings;
 
 use std::sync::{Arc, Mutex};
@@ -101,6 +102,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(commands::Allowed::default())
+        .manage(commands::convert::ImageExports::default())
+        .manage(jobs::Jobs::default())
         .manage(Store::open())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
@@ -114,11 +117,13 @@ pub fn run() {
             ping_core,
             get_settings,
             set_theme,
+            jobs::cancel_job,
             commands::pages::open_pdf,
             commands::pages::read_pdf,
             commands::pages::save_pages,
             commands::pages::open_saved,
             commands::pages::reveal_saved,
+            commands::pages::open_link,
             commands::merge::merge_pdfs,
             commands::images::open_image,
             commands::images::image_thumbnail,
@@ -130,6 +135,18 @@ pub fn run() {
             commands::split::parse_page_ranges,
             commands::split::split_pdf,
             commands::rotate::plan_rotation,
+            commands::security::unlock_session,
+            commands::security::protection_info,
+            commands::security::unlock_pdf,
+            commands::security::protect_pdf,
+            commands::convert::export_images_begin,
+            commands::convert::export_images_add,
+            commands::convert::export_images_finish,
+            commands::convert::export_images_cancel,
+            commands::stamp::stamp_pdf,
+            commands::stamp::stamp_preview,
+            commands::properties::read_properties,
+            commands::properties::save_properties,
         ])
         .run(tauri::generate_context!())
         .expect("error while running JJ PDF Studio");

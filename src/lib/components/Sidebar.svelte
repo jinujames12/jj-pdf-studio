@@ -4,7 +4,7 @@
   import PanelLeftClose from 'lucide-svelte/icons/panel-left-close';
   import PanelLeftOpen from 'lucide-svelte/icons/panel-left-open';
   import { go, nav, type ViewId } from '../stores/nav.svelte';
-  import { tools } from '../tools';
+  import { toolGroups, tools } from '../tools';
 
   const STORAGE_KEY = 'jj-pdf-studio.sidebar-collapsed';
 
@@ -52,9 +52,13 @@
 <nav class="sidebar" class:collapsed aria-label="Tools">
   {@render item('home', 'Home')}
 
-  <div class="heading">Tools</div>
-  {#each tools as t (t.id)}
-    {@render item(t.id, t.name)}
+  {#each toolGroups as group (group)}
+    <div class="group" role="group" aria-labelledby="group-{group}">
+      <div class="heading" id="group-{group}">{group}</div>
+      {#each tools.filter((t) => t.group === group) as t (t.id)}
+        {@render item(t.id, t.name)}
+      {/each}
+    </div>
   {/each}
 
   <div class="grow"></div>
@@ -84,11 +88,18 @@
     padding: var(--space-3) var(--space-2);
     background: var(--surface-2);
     border-right: 1px solid var(--border);
-    overflow: hidden;
+    /* 14 tools do not fit a 640 px window; scroll instead of clipping. */
+    overflow-x: hidden;
+    overflow-y: auto;
     transition: width var(--duration-base) var(--ease);
   }
   .sidebar.collapsed {
     width: var(--sidebar-width-collapsed);
+  }
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   .heading {
     height: 28px;
@@ -103,12 +114,17 @@
     transition: opacity var(--duration-fast) var(--ease);
   }
   .collapsed .heading {
-    opacity: 0;
+    height: 12px;
+    padding: 0;
+    font-size: 0;
+    border-top: 1px solid var(--border);
+    margin-top: var(--space-2);
   }
   .grow {
     flex: 1;
   }
   .item {
+    flex: none;
     display: flex;
     align-items: center;
     gap: var(--space-3);

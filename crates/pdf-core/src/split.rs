@@ -1,5 +1,6 @@
 //! Split and "extract one file per page": cut a document into several files.
 
+use crate::progress::{step, Progress, Silent};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -121,6 +122,17 @@ pub(crate) fn unique_path(dir: &Path, stem: &str) -> PathBuf {
 /// Splits `source` into files inside `out_dir`, named `<name>_<label>.pdf`.
 /// If anything fails, the files already written by this call are removed.
 pub fn split_to_folder(source: &Path, out_dir: &Path, mode: &SplitMode) -> Result<Vec<Written>> {
+    split_to_folder_with(source, out_dir, mode, &Silent)
+}
+
+/// Like [`split_to_folder`], reporting progress and stopping if cancelled
+/// (the files already written are removed).
+pub fn split_to_folder_with(
+    source: &Path,
+    out_dir: &Path,
+    mode: &SplitMode,
+    progress: &dyn Progress,
+) -> Result<Vec<Written>> {
     let doc = document::load(source)?;
     let page_count = doc.get_pages().len() as u32;
     let parts = plan(mode, page_count)?;
@@ -130,7 +142,13 @@ pub fn split_to_folder(source: &Path, out_dir: &Path, mode: &SplitMode) -> Resul
 
     let mut written: Vec<Written> = Vec::with_capacity(parts.len());
     let result = (|| {
-        for part in &parts {
+        for (i, part) in parts.iter().enumerate() {
+            step(
+                progress,
+                i as u32,
+                parts.len() as u32,
+                &format!("Writing file {} of {}", i + 1, parts.len()),
+            )?;
             let ops: Vec<PageOp> = part
                 .pages
                 .iter()

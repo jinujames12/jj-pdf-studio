@@ -5,6 +5,7 @@
 //! an `/SMask`. EXIF orientation and the user's rotation are never baked into
 //! pixels: they become part of the matrix that places the image on the page.
 
+use crate::progress::{step, Progress, Silent};
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
@@ -277,12 +278,12 @@ enum Pixels {
     },
 }
 
-struct Prepared {
+pub(crate) struct Prepared {
     /// Stored size in pixels (the picture before any orientation).
-    width: u32,
-    height: u32,
+    pub(crate) width: u32,
+    pub(crate) height: u32,
     /// EXIF orientation, 1 to 8.
-    exif: u8,
+    pub(crate) exif: u8,
     dpi: f64,
     pixels: Pixels,
 }
@@ -292,7 +293,7 @@ fn plausible_dpi(dpi: Option<f64>) -> f64 {
         .unwrap_or(DEFAULT_DPI)
 }
 
-fn prepare(path: &Path, quality: Quality) -> Result<Prepared> {
+pub(crate) fn prepare(path: &Path, quality: Quality) -> Result<Prepared> {
     let name = display_name(path);
     let bad = |_| Error::BadImage(name.clone());
     let bytes = std::fs::read(path)?;
@@ -420,7 +421,7 @@ fn then(first: Matrix, second: Matrix) -> Matrix {
 /// Map from the stored picture's unit square to the displayed unit square
 /// (both with y pointing up): first the EXIF orientation, then `quarter_turns`
 /// clockwise quarter turns.
-fn unit_matrix(exif: u8, quarter_turns: i32) -> Matrix {
+pub(crate) fn unit_matrix(exif: u8, quarter_turns: i32) -> Matrix {
     let orient: Matrix = match exif {
         2 => [-1.0, 0.0, 0.0, 1.0, 1.0, 0.0],
         3 => [-1.0, 0.0, 0.0, -1.0, 1.0, 1.0],
@@ -436,7 +437,7 @@ fn unit_matrix(exif: u8, quarter_turns: i32) -> Matrix {
     (0..quarter_turns.rem_euclid(4)).fold(orient, |m, _| then(m, quarter))
 }
 
-fn num(v: f64) -> String {
+pub(crate) fn num(v: f64) -> String {
     let s = format!("{v:.4}");
     let s = s.trim_end_matches('0').trim_end_matches('.');
     if s == "-0" || s.is_empty() { "0" } else { s }.to_string()
@@ -487,7 +488,7 @@ fn layout(shown_px: (f64, f64), dpi: f64, opts: &ImageOptions, margin: f64) -> R
 
 // Writing ------------------------------------------------------------------
 
-fn add_image_object(doc: &mut Document, p: &Prepared) -> ObjectId {
+pub(crate) fn add_image_object(doc: &mut Document, p: &Prepared) -> ObjectId {
     let color = |gray: bool| if gray { "DeviceGray" } else { "DeviceRGB" };
     let mut dict = dictionary! {
         "Type" => "XObject",
@@ -587,11 +588,22 @@ fn check(inputs: &[ImageInput], opts: &ImageOptions) -> Result<f64> {
 }
 
 /// Builds a document with one page per input image.
-fn build(inputs: &[ImageInput], opts: &ImageOptions, margin: f64) -> Result<Document> {
+fn build(
+    inputs: &[ImageInput],
+    opts: &ImageOptions,
+    margin: f64,
+    progress: &dyn Progress,
+) -> Result<Document> {
     let mut doc = Document::with_version("1.5");
     let pages_root = doc.new_object_id();
     let mut kids = Vec::with_capacity(inputs.len());
-    for input in inputs {
+    for (i, input) in inputs.iter().enumerate() {
+        step(
+            progress,
+            i as u32,
+            inputs.len() as u32,
+            &format!("Adding image {} of {}", i + 1, inputs.len()),
+        )?;
         // One image is decoded at a time, so memory stays at one picture.
         let prepared = prepare(&input.path, opts.quality)?;
         let page = add_page(&mut doc, pages_root, &prepared, input.rotate, opts, margin)?;
@@ -612,8 +624,19 @@ fn build(inputs: &[ImageInput], opts: &ImageOptions, margin: f64) -> Result<Docu
 
 /// Writes all images into one PDF at `output`. Returns its size in bytes.
 pub fn images_to_pdf(inputs: &[ImageInput], output: &Path, opts: &ImageOptions) -> Result<u64> {
+    images_to_pdf_with(inputs, output, opts, &Silent)
+}
+
+/// Like [`images_to_pdf`], reporting progress and stopping if cancelled.
+pub fn images_to_pdf_with(
+    inputs: &[ImageInput],
+    output: &Path,
+    opts: &ImageOptions,
+    progress: &dyn Progress,
+) -> Result<u64> {
     let margin = check(inputs, opts)?;
-    let mut doc = build(inputs, opts, margin)?;
+    let mut doc = build(inputs, opts, margin, progress)?;
+    step(progress, inputs.len() as u32, inputs.len() as u32, "Saving")?;
     write_atomic(&mut doc, output)
 }
 
@@ -624,11 +647,28 @@ pub fn images_to_folder(
     out_dir: &Path,
     opts: &ImageOptions,
 ) -> Result<Vec<Written>> {
+    images_to_folder_with(inputs, out_dir, opts, &Silent)
+}
+
+/// Like [`images_to_folder`], reporting progress and stopping if cancelled
+/// (the files already written are removed).
+pub fn images_to_folder_with(
+    inputs: &[ImageInput],
+    out_dir: &Path,
+    opts: &ImageOptions,
+    progress: &dyn Progress,
+) -> Result<Vec<Written>> {
     let margin = check(inputs, opts)?;
     let mut written: Vec<Written> = Vec::with_capacity(inputs.len());
     let result = (|| {
-        for input in inputs {
-            let mut doc = build(std::slice::from_ref(input), opts, margin)?;
+        for (i, input) in inputs.iter().enumerate() {
+            step(
+                progress,
+                i as u32,
+                inputs.len() as u32,
+                &format!("Writing file {} of {}", i + 1, inputs.len()),
+            )?;
+            let mut doc = build(std::slice::from_ref(input), opts, margin, &Silent)?;
             let stem = input
                 .path
                 .file_stem()

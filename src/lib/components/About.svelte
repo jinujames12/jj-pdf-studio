@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import { getVersion } from '@tauri-apps/api/app';
   import logoUrl from '../../../assets/brand/logo.svg';
-  import { inTauri, pingCore } from '../api';
+  import { inTauri, openLink, pingCore } from '../api';
+  import { dialogs } from '../stores/dialogs.svelte';
+  import { report } from '../saved';
 
   let appVersion = $state('…');
   let coreVersion = $state('…');
@@ -32,11 +34,24 @@
     <dd>pdf-core {coreVersion}</dd>
     <dt>Made by</dt>
     <dd>James &amp; James LLP</dd>
+    <dt>Build date</dt>
+    <dd>{__BUILD_DATE__}</dd>
     <dt>License</dt>
     <dd>Apache-2.0</dd>
   </dl>
 
-  <!-- TODO(M6): links to the repository and issue tracker, third-party licenses button. -->
+  <p class="privacy">Fully offline. No telemetry. Your files never leave this computer.</p>
+
+  <div class="buttons">
+    <button class="btn" onclick={() => void openLink('repository').catch(report)}>
+      Source code on GitHub
+    </button>
+    <button class="btn" onclick={() => void openLink('issues').catch(report)}>
+      Report a problem
+    </button>
+    <button class="btn" onclick={() => (dialogs.open = 'shortcuts')}>Keyboard shortcuts</button>
+    <button class="btn" onclick={() => (dialogs.open = 'notices')}>Third-party licenses</button>
+  </div>
 </section>
 
 <style>
@@ -72,6 +87,16 @@
     box-shadow: var(--shadow-card);
     text-align: left;
     user-select: text;
+  }
+  .privacy {
+    margin: var(--space-4) 0 var(--space-3);
+    color: var(--text-muted);
+  }
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
   }
   dt {
     color: var(--text-muted);

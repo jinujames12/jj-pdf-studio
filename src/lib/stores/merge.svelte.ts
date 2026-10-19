@@ -1,7 +1,8 @@
 // State of the Merge tool: the list of files, and (in page view) the list of
 // individual pages. Nothing is written until Save (SPEC section 3).
 import { confirm } from '@tauri-apps/plugin-dialog';
-import { errorMessage, openPdf, readPdf, type DocInfo, type MergeInput } from '../api';
+import { errorMessage, readPdf, type DocInfo, type MergeInput } from '../api';
+import { openPdfAsking, PasswordCancelled } from '../openPdf';
 import { fileName, stemOf } from '../paths';
 import { clearThumbs, loadPdf, type PdfDoc } from '../pdf/render';
 import { toast } from './toast.svelte';
@@ -82,7 +83,7 @@ export const merge = {
     try {
       for (const path of paths) {
         try {
-          const info = await openPdf(path);
+          const info = await openPdfAsking(path);
           const bytes = await readPdf(path);
           const pdf = await loadPdf(bytes);
           const id = nextId++;
@@ -97,7 +98,8 @@ export const merge = {
             pdf
           });
         } catch (e) {
-          toast('error', `${fileName(path)}: ${errorMessage(e)}`);
+          if (!(e instanceof PasswordCancelled))
+            toast('error', `${fileName(path)}: ${errorMessage(e)}`);
         }
       }
     } finally {

@@ -1,12 +1,16 @@
 //! Tauri commands: thin wrappers that validate input and call `pdf-core`.
 
 pub mod compress;
+pub mod convert;
 pub mod images;
 pub mod merge;
 pub mod pages;
+pub mod properties;
 pub mod resize;
 pub mod rotate;
+pub mod security;
 pub mod split;
+pub mod stamp;
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};

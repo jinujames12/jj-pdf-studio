@@ -3,10 +3,11 @@
 use std::path::PathBuf;
 
 use pdf_core::ResizeOptions;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use super::pages::{require_pdf_extension, SavedFile};
 use super::{canonical, Allowed};
+use crate::jobs::{self, Jobs};
 
 /// New on-screen size `[width, height]` in points of every page the options
 /// touch (`null` for pages left alone). Nothing is written.
@@ -32,17 +33,18 @@ pub async fn resize_pdf(
     source: PathBuf,
     output: PathBuf,
     options: ResizeOptions,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<SavedFile, String> {
     let source = allowed.check_opened(&source)?;
     require_pdf_extension(&output)?;
     let out = output.clone();
-    let size = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::resize_file(&source, &out, &options)
+    let size = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::resize_file_with(&source, &out, &options, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     let output = canonical(&output)?;
     allowed.allow_saved(output.clone());
     Ok(SavedFile {

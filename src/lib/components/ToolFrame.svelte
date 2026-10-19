@@ -126,6 +126,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
+    /* Keep the icon and hint off the dashed border even in a short window. */
+    padding: var(--space-6) var(--space-4);
+    min-height: 240px;
     border: 2px dashed var(--border);
     border-radius: var(--radius-card);
     background: var(--surface);

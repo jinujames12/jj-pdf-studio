@@ -10,6 +10,12 @@ export type ViewId =
   | 'resize'
   | 'compress'
   | 'images'
+  | 'unlock'
+  | 'protect'
+  | 'toimages'
+  | 'pagenumbers'
+  | 'watermark'
+  | 'properties'
   | 'about';
 
 export const nav = $state<{ view: ViewId }>({ view: 'home' });

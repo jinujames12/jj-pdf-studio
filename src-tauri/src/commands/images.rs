@@ -6,10 +6,11 @@ use std::time::UNIX_EPOCH;
 use pdf_core::{ImageInput, ImageOptions};
 use serde::Serialize;
 use tauri::ipc::Response;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use super::pages::{require_pdf_extension, SavedFile};
 use super::{canonical, Allowed};
+use crate::jobs::{self, Jobs};
 
 const IMAGE_EXTENSIONS: [&str; 9] = [
     "jpg", "jpeg", "png", "bmp", "gif", "tif", "tiff", "webp", "jfif",
@@ -90,17 +91,18 @@ pub async fn images_to_pdf(
     mut inputs: Vec<ImageInput>,
     output: PathBuf,
     options: ImageOptions,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<SavedFile, String> {
     check_inputs(&mut inputs, &allowed)?;
     require_pdf_extension(&output)?;
     let out = output.clone();
-    let size = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::images_to_pdf(&inputs, &out, &options)
+    let size = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::images_to_pdf_with(&inputs, &out, &options, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     let output = canonical(&output)?;
     allowed.allow_saved(output.clone());
     Ok(SavedFile {
@@ -115,6 +117,9 @@ pub async fn images_to_folder(
     mut inputs: Vec<ImageInput>,
     out_dir: PathBuf,
     options: ImageOptions,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<Vec<SavedFile>, String> {
     check_inputs(&mut inputs, &allowed)?;
@@ -123,12 +128,10 @@ pub async fn images_to_folder(
         return Err("Choose a folder to save the files in.".into());
     }
     let dir = out_dir.clone();
-    let written = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::images_to_folder(&inputs, &dir, &options)
+    let written = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::images_to_folder_with(&inputs, &dir, &options, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     written
         .into_iter()
         .map(|w| {

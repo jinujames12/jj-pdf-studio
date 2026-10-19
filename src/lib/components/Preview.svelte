@@ -110,19 +110,26 @@
       {/if}
     </div>
     <div class="bar">
-      <button class="icon" title="Previous page" disabled={index <= 0} onclick={() => go(-1)}>
+      <button
+        class="icon"
+        title="Previous page"
+        aria-label="Previous page"
+        disabled={index <= 0}
+        onclick={() => go(-1)}
+      >
         <ChevronLeft size={18} strokeWidth={1.75} />
       </button>
       <span class="count">Page {index + 1} of {items.length}</span>
       <button
         class="icon"
         title="Next page"
+        aria-label="Next page"
         disabled={index >= items.length - 1}
         onclick={() => go(1)}
       >
         <ChevronRight size={18} strokeWidth={1.75} />
       </button>
-      <button class="icon close" title="Close (Esc)" onclick={onclose}>
+      <button class="icon close" title="Close (Esc)" aria-label="Close preview" onclick={onclose}>
         <X size={18} strokeWidth={1.75} />
       </button>
     </div>

@@ -14,6 +14,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
+      - run: npm run notices
       - run: cargo test --workspace
       - run: npm run tauri build
       - name: Prepare artifacts
@@ -24,6 +25,7 @@ jobs:
           # Cargo workspace: build output is in the repo-root target/ folder.
           Copy-Item target/release/jj-pdf-studio.exe "dist-release/JJPDFStudio-$v-portable.exe"
           Copy-Item target/release/bundle/nsis/*.exe "dist-release/JJPDFStudio-$v-setup.exe"
+          Copy-Item THIRD_PARTY_NOTICES.md dist-release/
           Get-FileHash dist-release/*.exe -Algorithm SHA256 |
             ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
             Out-File dist-release/SHA256SUMS.txt -Encoding ascii

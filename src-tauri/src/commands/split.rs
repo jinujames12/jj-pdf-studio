@@ -3,10 +3,11 @@
 use std::path::PathBuf;
 
 use pdf_core::SplitMode;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use super::pages::SavedFile;
 use super::{canonical, Allowed};
+use crate::jobs::{self, Jobs};
 
 /// Validates page-range text for the live feedback in the UI.
 #[tauri::command]
@@ -20,6 +21,9 @@ pub async fn split_pdf(
     source: PathBuf,
     out_dir: PathBuf,
     mode: SplitMode,
+    app: AppHandle,
+    jobs: State<'_, Jobs>,
+    job_id: String,
     allowed: State<'_, Allowed>,
 ) -> Result<Vec<SavedFile>, String> {
     let source = allowed.check_opened(&source)?;
@@ -28,12 +32,10 @@ pub async fn split_pdf(
         return Err("Choose a folder to save the files in.".into());
     }
     let dir = out_dir.clone();
-    let written = tauri::async_runtime::spawn_blocking(move || {
-        pdf_core::split_to_folder(&source, &dir, &mode)
+    let written = jobs::run(&app, &jobs, job_id, move |p| {
+        pdf_core::split_to_folder_with(&source, &dir, &mode, p)
     })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
+    .await?;
     written
         .into_iter()
         .map(|w| {

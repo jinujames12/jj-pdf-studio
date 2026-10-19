@@ -9,3 +9,4 @@ Cargo.lock
 *.toml
 LICENSE
 SPEC.md
+THIRD_PARTY_NOTICES.md

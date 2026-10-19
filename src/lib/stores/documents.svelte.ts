@@ -1,6 +1,7 @@
 // The PDF currently open in the app, plus the helpers that open one.
 import { open as openDialog, confirm } from '@tauri-apps/plugin-dialog';
-import { errorMessage, openPdf, readPdf, type DocInfo } from '../api';
+import { errorMessage, readPdf, type DocInfo } from '../api';
+import { openPdfAsking, PasswordCancelled } from '../openPdf';
 import { clearThumbs, loadPdf, type PdfDoc } from '../pdf/render';
 import { fileName, isImage } from '../paths';
 import { images } from './images.svelte';
@@ -48,7 +49,19 @@ export const documents = {
 };
 
 /** Tools that keep working on the current document instead of jumping to Pages. */
-const STAY_IN_TOOL: string[] = ['split', 'extract', 'rotate', 'resize', 'compress'];
+const STAY_IN_TOOL: string[] = [
+  'split',
+  'extract',
+  'rotate',
+  'resize',
+  'compress',
+  'unlock',
+  'protect',
+  'toimages',
+  'pagenumbers',
+  'watermark',
+  'properties'
+];
 
 export { folderOf } from '../paths';
 
@@ -65,7 +78,7 @@ export async function openPath(path: string): Promise<boolean> {
   }
   loading = true;
   try {
-    const info = await openPdf(path);
+    const info = await openPdfAsking(path);
     const bytes = await readPdf(path);
     const pdf = await loadPdf(bytes);
     if (current) {
@@ -83,7 +96,7 @@ export async function openPath(path: string): Promise<boolean> {
     pageEdit.reset(info);
     return true;
   } catch (e) {
-    toast('error', errorMessage(e));
+    if (!(e instanceof PasswordCancelled)) toast('error', errorMessage(e));
     return false;
   } finally {
     loading = false;

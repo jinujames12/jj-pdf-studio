@@ -5,6 +5,7 @@
 //! after them (`Q`), a new `/MediaBox`, and its annotations are moved by the
 //! same scale and offset. The page keeps its `/Rotate`.
 
+use crate::progress::{step, Progress, Silent};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -286,7 +287,7 @@ fn move_annotations(
 }
 
 /// The page's content streams as a list of references.
-fn content_refs(doc: &Document, page: ObjectId) -> Vec<Object> {
+pub(crate) fn content_refs(doc: &Document, page: ObjectId) -> Vec<Object> {
     let Ok(dict) = doc.get_dictionary(page) else {
         return Vec::new();
     };
@@ -370,11 +371,24 @@ pub fn resize(doc: &mut Document, opts: &ResizeOptions) -> Result<()> {
 /// Loads `source`, resizes it and writes the result to `output`, which must
 /// not be the source file. Returns the size of the written file in bytes.
 pub fn resize_file(source: &Path, output: &Path, opts: &ResizeOptions) -> Result<u64> {
+    resize_file_with(source, output, opts, &Silent)
+}
+
+/// Like [`resize_file`], reporting progress and stopping if cancelled.
+pub fn resize_file_with(
+    source: &Path,
+    output: &Path,
+    opts: &ResizeOptions,
+    progress: &dyn Progress,
+) -> Result<u64> {
     if same_file(source, output) {
         return Err(Error::OutputIsSource(output.to_path_buf()));
     }
+    step(progress, 0, 3, "Reading the document")?;
     let mut doc = document::load(source)?;
+    step(progress, 1, 3, "Resizing pages")?;
     resize(&mut doc, opts)?;
+    step(progress, 2, 3, "Saving")?;
     write_atomic(&mut doc, output)
 }
 

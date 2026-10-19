@@ -96,3 +96,81 @@
 .page-grid .ghost {
   opacity: 0.35;
 }
+
+/* Option panel beside a live preview (Page numbers, Watermark) or a form (Properties). */
+.opts-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  padding: var(--space-4);
+  min-height: 100%;
+}
+@media (max-width: 1180px) {
+  .opts-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.opts .field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.opts .field > span,
+.opts .legend {
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+.opts .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.opts .row > .field {
+  flex: 1;
+  min-width: 96px;
+}
+.opts select,
+.opts input[type='text'],
+.opts input[type='number'] {
+  height: 32px;
+  min-width: 0;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+.opts input[type='color'] {
+  width: 48px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.opts input[type='range'] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.opts input.invalid {
+  border-color: var(--danger);
+}
+.opts .check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.opts .note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}

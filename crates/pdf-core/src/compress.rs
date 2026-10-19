@@ -12,9 +12,11 @@
 //! through unchanged. A recompressed image or the whole file is only kept when
 //! it is actually smaller.
 
+use crate::progress::{step, Progress, Silent};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use image::imageops::FilterType;
 use image::{DynamicImage, ExtendedColorType, ImageFormat};
@@ -107,12 +109,25 @@ pub fn compress_file(
     output: &Path,
     opts: &CompressOptions,
 ) -> Result<CompressReport> {
+    compress_file_with(source, output, opts, &Silent)
+}
+
+/// Like [`compress_file`], reporting progress and stopping if cancelled.
+pub fn compress_file_with(
+    source: &Path,
+    output: &Path,
+    opts: &CompressOptions,
+    progress: &dyn Progress,
+) -> Result<CompressReport> {
     if same_file(source, output) {
         return Err(Error::OutputIsSource(output.to_path_buf()));
     }
+    step(progress, 0, 100, "Reading the document")?;
     let before = std::fs::metadata(source)?.len();
     let mut doc = document::load(source)?;
-    let stats = compress(&mut doc, opts);
+    step(progress, 5, 100, "Recompressing images")?;
+    let stats = compress(&mut doc, opts, progress);
+    step(progress, 95, 100, "Saving")?;
     let bytes = serialize(&mut doc)?;
     let after = bytes.len() as u64;
     let written = after < before;
@@ -135,12 +150,13 @@ struct Stats {
 }
 
 /// Runs the whole pipeline on `doc` in memory.
-fn compress(doc: &mut Document, opts: &CompressOptions) -> Stats {
+fn compress(doc: &mut Document, opts: &CompressOptions, progress: &dyn Progress) -> Stats {
     strip_junk(doc);
     let stats = match opts.preset.image_rule() {
-        Some(rule) => recompress_images(doc, &rule, opts.grayscale),
+        Some(rule) => recompress_images(doc, &rule, opts.grayscale, progress),
         None => Stats::default(),
     };
+    progress.report(90, 100, "Optimising the file");
     deflate_streams(doc);
     merge_duplicates(doc);
     prune(doc);
@@ -733,7 +749,12 @@ fn shrink_mask(m: &MaskJob, new_image_width: u32, image_width: u32) -> Option<(O
     (stream.content.len() < m.stream.content.len()).then_some((m.id, stream))
 }
 
-fn recompress_images(doc: &mut Document, rule: &ImageRule, grayscale: bool) -> Stats {
+fn recompress_images(
+    doc: &mut Document,
+    rule: &ImageRule,
+    grayscale: bool,
+    progress: &dyn Progress,
+) -> Stats {
     let mut scan = Scan::new(doc);
     scan.pages();
     let measured = scan.dpi;
@@ -765,7 +786,25 @@ fn recompress_images(doc: &mut Document, rule: &ImageRule, grayscale: bool) -> S
     let found = jobs.len() as u32;
 
     // Decoding, resizing and encoding is the slow part; do it in parallel.
-    let done: Vec<Done> = jobs.par_iter().filter_map(recompress).collect();
+    // A cancelled run skips the remaining images; `compress_file_with` then
+    // notices the flag at its next step and discards the half-done document.
+    let finished = AtomicU32::new(0);
+    let done: Vec<Done> = jobs
+        .par_iter()
+        .filter_map(|job| {
+            if progress.is_cancelled() {
+                return None;
+            }
+            let result = recompress(job);
+            let n = finished.fetch_add(1, Ordering::Relaxed) + 1;
+            progress.report(
+                5 + 80 * n / found,
+                100,
+                &format!("Recompressing image {n} of {found}"),
+            );
+            result
+        })
+        .collect();
     let recompressed = done.len() as u32;
     for d in done {
         if let Some(Object::Stream(s)) = doc.objects.get_mut(&d.id) {

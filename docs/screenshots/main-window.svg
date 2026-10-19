@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img" aria-label="Screenshot placeholder: Main window">
+  <rect width="1280" height="800" fill="#eef0fa"/>
+  <rect x="24" y="24" width="1232" height="752" rx="10" fill="none" stroke="#2c388e" stroke-width="2" stroke-dasharray="12 8"/>
+  <text x="640" y="380" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="600" fill="#2c388e">Main window</text>
+  <text x="640" y="430" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5b6178">Screenshot placeholder: Home screen with the tool grid (light theme)</text>
+</svg>
