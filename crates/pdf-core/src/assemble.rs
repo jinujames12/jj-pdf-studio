@@ -174,14 +174,21 @@ pub fn save_pages(source: &Path, output: &Path, ops: &[PageOp]) -> Result<u64> {
 /// Saves `doc` to `output` through a temporary file beside it, so a failure
 /// never leaves a truncated PDF at the chosen name. Returns the size in bytes.
 pub(crate) fn write_atomic(doc: &mut Document, output: &Path) -> Result<u64> {
+    write_via_temp(output, |tmp| doc.save(tmp).map(drop).map_err(Error::from))
+}
+
+/// Like `write_atomic`, for a file that is already serialised.
+pub(crate) fn write_bytes_atomic(bytes: &[u8], output: &Path) -> Result<u64> {
+    write_via_temp(output, |tmp| {
+        std::fs::write(tmp, bytes).map_err(Error::from)
+    })
+}
+
+fn write_via_temp(output: &Path, write: impl FnOnce(&Path) -> Result<()>) -> Result<u64> {
     let mut tmp = output.as_os_str().to_owned();
     tmp.push(".tmp");
     let tmp = std::path::PathBuf::from(tmp);
-    let result = doc
-        .save(&tmp)
-        .map(drop)
-        .map_err(Error::from)
-        .and_then(|()| std::fs::rename(&tmp, output).map_err(Error::from));
+    let result = write(&tmp).and_then(|()| std::fs::rename(&tmp, output).map_err(Error::from));
     if result.is_err() {
         let _ = std::fs::remove_file(&tmp);
     }

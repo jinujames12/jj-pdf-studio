@@ -155,3 +155,26 @@ export const planResize = (source: string, options: ResizeOptions) =>
 
 export const resizePdf = (source: string, output: string, options: ResizeOptions) =>
   invoke<SavedFile>('resize_pdf', { source, output, options });
+
+// Compress ---------------------------------------------------------------------------
+
+export type CompressPreset = 'lossless' | 'balanced' | 'strong';
+
+export interface CompressOptions {
+  preset: CompressPreset;
+  /** Also turn colour images gray (Strong only). */
+  grayscale: boolean;
+}
+
+export interface CompressResult {
+  /** Where the smaller copy was saved; `null` when it would not have been smaller. */
+  path: string | null;
+  before: number;
+  after: number;
+  written: boolean;
+  images_found: number;
+  images_recompressed: number;
+}
+
+export const compressPdf = (source: string, output: string, options: CompressOptions) =>
+  invoke<CompressResult>('compress_pdf', { source, output, options });

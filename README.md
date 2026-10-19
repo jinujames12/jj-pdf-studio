@@ -26,7 +26,7 @@
 - **Extract** selected pages
 - **Rotate** all or some pages, losslessly
 - **Resize** pages to A4, Letter and other sizes
-- **Compress** to shrink file size
+- **Compress** to shrink file size (lossless, balanced or strong)
 - **Images to PDF**
 
 ## Download
@@ -64,6 +64,31 @@ stay interactive after merging or resizing.
   page is cropped by the page edge.
 - **Images to PDF** reads JPG, PNG, BMP, GIF (first frame), TIFF (first page) and WebP. CMYK and
   other unusual encodings are not tested and may be refused with a "could not be read" message.
+
+- **Compress** only recompresses images it fully understands: JPEG and Flate images in RGB or
+  gray (8 bits per channel), with or without a soft mask. JBIG2, JPEG 2000, CCITT, CMYK, indexed
+  colour, images with a Decode array or colour-key mask, and inline images are left as they are.
+  Fonts are not subset or removed, so text-only and vector PDFs shrink little. If the result is
+  not smaller, no file is written and the original should be kept. Recompressing images is lossy;
+  use **Lossless** if nothing may change.
+
+## Compression results
+
+Run `cargo run --release -p pdf-core --example bench_compress` to reproduce. The example builds
+three kinds of PDF in memory, so the numbers show how each preset behaves, not what a particular
+real-world file will do. Photos and scans in the wild vary a lot; the generated pictures are
+smoother and larger than most, which exaggerates the savings of Balanced and Strong.
+
+| Document                                   | Original | Lossless       | Balanced       | Strong          |
+| ------------------------------------------ | -------- | -------------- | -------------- | --------------- |
+| Scan, 8 pages, JPEG 300 DPI                | 17.11 MB | 17.11 MB (-0%) | 2.14 MB (-87%) | 0.91 MB (-95%)  |
+| Office report, 10 pages, 2 photos per page | 73.36 MB | 73.36 MB (-0%) | 0.63 MB (-99%) | 0.20 MB (-100%) |
+| Text only, 100 pages, uncompressed         | 0.50 MB  | 0.04 MB (-93%) | 0.04 MB (-93%) | 0.04 MB (-93%)  |
+| Text only, 100 pages, already Flate        | 0.05 MB  | 0.04 MB (-24%) | 0.04 MB (-24%) | 0.04 MB (-24%)  |
+
+Lossless saves nothing on files whose size is mostly already-compressed images, and a lot on files
+written without stream compression. Balanced and Strong only change images drawn above 200 and
+150 DPI.
 
 ## Building from source
 

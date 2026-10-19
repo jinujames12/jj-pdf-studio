@@ -4,6 +4,7 @@
 //! tested anywhere and reused later (for example by a command-line tool).
 
 pub mod assemble;
+pub mod compress;
 pub mod document;
 pub mod error;
 pub mod images;
@@ -15,6 +16,7 @@ pub mod rotate;
 pub mod split;
 
 pub use assemble::{assemble, same_file, save_pages, PageOp};
+pub use compress::{compress_file, CompressOptions, CompressReport, Preset};
 pub use document::{inspect, load, DocInfo, PageInfo};
 pub use error::{Error, Result};
 pub use images::{

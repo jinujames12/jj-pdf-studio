@@ -1,5 +1,6 @@
 //! Tauri commands: thin wrappers that validate input and call `pdf-core`.
 
+pub mod compress;
 pub mod images;
 pub mod merge;
 pub mod pages;

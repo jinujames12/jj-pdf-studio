@@ -35,6 +35,9 @@
     <span>JJ PDF Studio</span>
   </button>
 
+  <!-- Secondary credit: muted and small so the product name stays the focus. -->
+  <span class="byline" data-tauri-drag-region>James &amp; James LLP</span>
+
   <!-- Empty drag area between brand and controls -->
   <div class="spacer" data-tauri-drag-region></div>
 
@@ -99,6 +102,16 @@
   .brand img {
     display: block;
     border-radius: 6px;
+  }
+  .byline {
+    margin-left: var(--space-2);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    line-height: 16px;
+    white-space: nowrap;
   }
   .spacer {
     flex: 1;

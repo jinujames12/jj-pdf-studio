@@ -2494,6 +2494,7 @@ version = "0.1.0"
 dependencies = [
  "image",
  "lopdf",
+ "rayon",
  "serde",
  "thiserror 2.0.21",
 ]

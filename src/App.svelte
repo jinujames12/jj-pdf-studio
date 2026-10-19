@@ -11,6 +11,7 @@
   import Extract from './lib/tools/Extract.svelte';
   import Rotate from './lib/tools/Rotate.svelte';
   import Resize from './lib/tools/Resize.svelte';
+  import Compress from './lib/tools/Compress.svelte';
   import Images from './lib/tools/Images.svelte';
   import { nav } from './lib/stores/nav.svelte';
   import { tools } from './lib/tools';
@@ -64,6 +65,8 @@
             <Rotate />
           {:else if nav.view === 'resize'}
             <Resize />
+          {:else if nav.view === 'compress'}
+            <Compress />
           {:else if nav.view === 'images'}
             <Images />
           {:else if tool}

@@ -124,6 +124,7 @@ pub fn run() {
             commands::images::image_thumbnail,
             commands::images::images_to_pdf,
             commands::images::images_to_folder,
+            commands::compress::compress_pdf,
             commands::resize::plan_resize,
             commands::resize::resize_pdf,
             commands::split::parse_page_ranges,

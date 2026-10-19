@@ -19,3 +19,9 @@ All notable changes to this project are documented here. The format is based on
   PNG transparency kept, EXIF orientation honoured; page size, orientation, margin, fit and quality
   options; one PDF or one per image) and Resize (A4, A3, A5, Letter, Legal or custom; fit, fill or
   size-only; links and comments move with the page).
+- M5 tool: Compress with three presets. Lossless removes unused data and thumbnails, compresses
+  plain streams, merges identical streams and packs objects into object streams. Balanced and
+  Strong also recompress large JPEG and Flate images (RGB or gray, with or without a soft mask) at
+  a lower resolution, judged by the largest size each image is drawn at. Images the tool does not
+  understand pass through unchanged. Nothing is written when the result would not be smaller, and
+  the result dialog shows before and after sizes.

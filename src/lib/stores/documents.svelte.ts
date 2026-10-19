@@ -48,7 +48,7 @@ export const documents = {
 };
 
 /** Tools that keep working on the current document instead of jumping to Pages. */
-const STAY_IN_TOOL: string[] = ['split', 'extract', 'rotate', 'resize'];
+const STAY_IN_TOOL: string[] = ['split', 'extract', 'rotate', 'resize', 'compress'];
 
 export { folderOf } from '../paths';
 
