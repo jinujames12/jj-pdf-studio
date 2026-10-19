@@ -134,11 +134,40 @@ pub fn split_to_folder_with(
     progress: &dyn Progress,
 ) -> Result<Vec<Written>> {
     let doc = document::load(source)?;
+    split_document(&doc, &stem_of(source), out_dir, mode, progress)
+}
+
+/// Splits the document as edited by `ops` (reordered, rotated, with pages
+/// deleted, duplicated or inserted), so Page Editor can export without saving
+/// first. Page numbers in `mode` count the edited pages. Files are named after
+/// `source`.
+pub fn split_edited_with(
+    source: &Path,
+    ops: &[PageOp],
+    out_dir: &Path,
+    mode: &SplitMode,
+    progress: &dyn Progress,
+) -> Result<Vec<Written>> {
+    let mut doc = document::load(source)?;
+    assemble(&mut doc, ops)?;
+    split_document(&doc, &stem_of(source), out_dir, mode, progress)
+}
+
+fn stem_of(source: &Path) -> String {
+    source
+        .file_stem()
+        .map_or_else(|| "document".into(), |s| s.to_string_lossy().into_owned())
+}
+
+fn split_document(
+    doc: &lopdf::Document,
+    stem: &str,
+    out_dir: &Path,
+    mode: &SplitMode,
+    progress: &dyn Progress,
+) -> Result<Vec<Written>> {
     let page_count = doc.get_pages().len() as u32;
     let parts = plan(mode, page_count)?;
-    let stem = source
-        .file_stem()
-        .map_or_else(|| "document".into(), |s| s.to_string_lossy().into_owned());
 
     let mut written: Vec<Written> = Vec::with_capacity(parts.len());
     let result = (|| {

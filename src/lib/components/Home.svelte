@@ -10,7 +10,7 @@
 
   <div class="grid">
     {#each tools as t (t.id)}
-      <button class="card" onclick={() => go(t.id)}>
+      <button class="card" onclick={() => go(t.view, t.panel)}>
         <span class="icon"><t.icon size={20} strokeWidth={1.75} /></span>
         <span class="name">{t.name}</span>
         <span class="desc">{t.description}</span>

@@ -9,18 +9,14 @@
   import Shortcuts from './lib/components/Shortcuts.svelte';
   import Notices from './lib/components/Notices.svelte';
   import PasswordPrompt from './lib/components/PasswordPrompt.svelte';
-  import Pages from './lib/tools/Pages.svelte';
+  import PageEditor from './lib/tools/PageEditor.svelte';
   import Merge from './lib/tools/Merge.svelte';
-  import Split from './lib/tools/Split.svelte';
-  import Extract from './lib/tools/Extract.svelte';
-  import Rotate from './lib/tools/Rotate.svelte';
   import Resize from './lib/tools/Resize.svelte';
   import Compress from './lib/tools/Compress.svelte';
   import Images from './lib/tools/Images.svelte';
   import Unlock from './lib/tools/Unlock.svelte';
   import Protect from './lib/tools/Protect.svelte';
   import ToImages from './lib/tools/ToImages.svelte';
-  import PageNumbers from './lib/tools/PageNumbers.svelte';
   import Watermark from './lib/tools/Watermark.svelte';
   import Properties from './lib/tools/Properties.svelte';
   import { nav } from './lib/stores/nav.svelte';
@@ -33,7 +29,7 @@
 
   let main = $state<HTMLElement>();
 
-  const tool = $derived(tools.find((t) => t.id === nav.view));
+  const tool = $derived(tools.find((t) => t.view === nav.view));
 
   function onkeydown(e: KeyboardEvent) {
     const t = e.target as HTMLElement | null;
@@ -53,7 +49,7 @@
     }
   }
 
-  // Files dropped anywhere on the window open in the Pages tool (or join the list in Merge or
+  // Files dropped anywhere on the window open in the Page Editor (or join the list in Merge or
   // Images to PDF). Tauri reports
   // drops through the webview (HTML5 drop events do not fire) with real paths.
   onMount(() => {
@@ -88,16 +84,10 @@
             <Home />
           {:else if nav.view === 'about'}
             <About />
-          {:else if nav.view === 'pages'}
-            <Pages />
+          {:else if nav.view === 'page-editor'}
+            <PageEditor />
           {:else if nav.view === 'merge'}
             <Merge />
-          {:else if nav.view === 'split'}
-            <Split />
-          {:else if nav.view === 'extract'}
-            <Extract />
-          {:else if nav.view === 'rotate'}
-            <Rotate />
           {:else if nav.view === 'resize'}
             <Resize />
           {:else if nav.view === 'compress'}
@@ -110,8 +100,6 @@
             <Protect />
           {:else if nav.view === 'toimages'}
             <ToImages />
-          {:else if nav.view === 'pagenumbers'}
-            <PageNumbers />
           {:else if nav.view === 'watermark'}
             <Watermark />
           {:else if nav.view === 'properties'}

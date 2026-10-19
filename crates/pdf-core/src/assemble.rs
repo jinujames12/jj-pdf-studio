@@ -185,6 +185,32 @@ pub fn save_pages_with(
     write_atomic(&mut doc, output)
 }
 
+/// Like [`save_pages_with`], then adds page numbers to the arranged pages, so a
+/// number follows its page's final position. `numbering.pages` counts output
+/// pages.
+pub fn save_edited_with(
+    source: &Path,
+    output: &Path,
+    ops: &[PageOp],
+    numbering: Option<&crate::stamp::PageNumberOptions>,
+    progress: &dyn Progress,
+) -> Result<u64> {
+    let Some(numbering) = numbering else {
+        return save_pages_with(source, output, ops, progress);
+    };
+    if same_file(source, output) {
+        return Err(Error::OutputIsSource(output.to_path_buf()));
+    }
+    step(progress, 0, 4, "Reading the document")?;
+    let mut doc = document::load(source)?;
+    step(progress, 1, 4, "Arranging pages")?;
+    assemble(&mut doc, ops)?;
+    step(progress, 2, 4, "Adding page numbers")?;
+    crate::stamp::add_page_numbers(&mut doc, numbering)?;
+    step(progress, 3, 4, "Saving")?;
+    write_atomic(&mut doc, output)
+}
+
 /// Saves `doc` to `output` through a temporary file beside it, so a failure
 /// never leaves a truncated PDF at the chosen name. Returns the size in bytes.
 pub(crate) fn write_atomic(doc: &mut Document, output: &Path) -> Result<u64> {

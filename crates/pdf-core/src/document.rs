@@ -18,7 +18,7 @@ pub(crate) const INHERITABLE: [&[u8]; 4] = [b"MediaBox", b"CropBox", b"Resources
 
 /// Geometry of one page, enough for the UI to lay out placeholders and to size
 /// new blank pages next to it. Sizes are in PDF points, before rotation.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, serde::Deserialize)]
 pub struct PageInfo {
     pub width: f64,
     pub height: f64,

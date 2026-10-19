@@ -43,9 +43,15 @@ export async function readPdf(path: string): Promise<Uint8Array> {
   return new Uint8Array(await invoke<ArrayBuffer>('read_pdf', { path }));
 }
 
-export const savePages = (source: string, output: string, ops: PageOp[]) =>
+/** Writes the arranged pages; `numbering` adds page numbers to the result. */
+export const savePages = (
+  source: string,
+  output: string,
+  ops: PageOp[],
+  numbering: PageNumberOptions | null = null
+) =>
   runJob('Saving the PDF', (jobId) =>
-    invoke<SavedFile>('save_pages', { source, output, ops, jobId })
+    invoke<SavedFile>('save_pages', { source, output, ops, numbering, jobId })
   );
 
 export const openSaved = (path: string) => invoke<void>('open_saved', { path });
@@ -81,9 +87,13 @@ export type SplitMode =
   | { kind: 'at'; after: number[] }
   | { kind: 'pages'; pages: number[] };
 
-export const splitPdf = (source: string, outDir: string, mode: SplitMode) =>
+/**
+ * `ops` is the Page Editor's edited page list: when given, the file is arranged
+ * that way first (unsaved edits included) and `mode` counts the edited pages.
+ */
+export const splitPdf = (source: string, outDir: string, mode: SplitMode, ops?: PageOp[]) =>
   runJob('Splitting the PDF', (jobId) =>
-    invoke<SavedFile[]>('split_pdf', { source, outDir, mode, jobId })
+    invoke<SavedFile[]>('split_pdf', { source, outDir, mode, ops: ops ?? null, jobId })
   );
 
 /** Inclusive 1-based `[first, last]` ranges; rejects with a plain-language message. */
@@ -97,9 +107,16 @@ export type RotateAction =
   | { kind: 'turn'; target: RotateTarget; degrees: number }
   | { kind: 'orient'; orientation: 'portrait' | 'landscape' };
 
-/** New per-page turns (0/90/180/270) after applying `action` on top of `current`. */
-export const planRotation = (source: string, current: number[], action: RotateAction) =>
-  invoke<number[]>('plan_rotation', { source, current, action });
+/**
+ * New per-page turns (0/90/180/270) after applying `action` on top of `current`.
+ * `pages` is the geometry of an edited page list; without it the pages of `source` are used.
+ */
+export const planRotation = (
+  source: string,
+  current: number[],
+  action: RotateAction,
+  pages: PageInfo[] | null = null
+) => invoke<number[]>('plan_rotation', { source, current, pages, action });
 
 // Images to PDF and Resize ---------------------------------------------------------
 

@@ -12,6 +12,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
       - run: npm run lint && npm run check # eslint + prettier + svelte-check
+      - run: npm test
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace -- -D warnings
       - run: cargo test --workspace

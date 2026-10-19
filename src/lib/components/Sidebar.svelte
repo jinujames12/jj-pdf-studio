@@ -4,7 +4,7 @@
   import PanelLeftClose from 'lucide-svelte/icons/panel-left-close';
   import PanelLeftOpen from 'lucide-svelte/icons/panel-left-open';
   import { go, nav, type ViewId } from '../stores/nav.svelte';
-  import { toolGroups, tools } from '../tools';
+  import { sidebarTools, toolGroups } from '../tools';
 
   const STORAGE_KEY = 'jj-pdf-studio.sidebar-collapsed';
 
@@ -42,7 +42,7 @@
     {#if id === 'home'}<House size={18} strokeWidth={1.75} />
     {:else if id === 'about'}<Info size={18} strokeWidth={1.75} />
     {:else}
-      {@const Icon = tools.find((t) => t.id === id)?.icon}
+      {@const Icon = sidebarTools.find((t) => t.view === id)?.icon}
       {#if Icon}<Icon size={18} strokeWidth={1.75} />{/if}
     {/if}
     <span class="label">{label}</span>
@@ -55,8 +55,8 @@
   {#each toolGroups as group (group)}
     <div class="group" role="group" aria-labelledby="group-{group}">
       <div class="heading" id="group-{group}">{group}</div>
-      {#each tools.filter((t) => t.group === group) as t (t.id)}
-        {@render item(t.id, t.name)}
+      {#each sidebarTools.filter((t) => t.group === group) as t (t.id)}
+        {@render item(t.view, t.name)}
       {/each}
     </div>
   {/each}
@@ -88,7 +88,7 @@
     padding: var(--space-3) var(--space-2);
     background: var(--surface-2);
     border-right: 1px solid var(--border);
-    /* 14 tools do not fit a 640 px window; scroll instead of clipping. */
+    /* 10 entries and five headings do not fit a 640 px window; scroll instead of clipping. */
     overflow-x: hidden;
     overflow-y: auto;
     transition: width var(--duration-base) var(--ease);

@@ -20,7 +20,7 @@ pub mod security;
 pub mod split;
 pub mod stamp;
 
-pub use assemble::{assemble, same_file, save_pages, save_pages_with, PageOp};
+pub use assemble::{assemble, same_file, save_edited_with, save_pages, save_pages_with, PageOp};
 pub use compress::{compress_file, compress_file_with, CompressOptions, CompressReport, Preset};
 pub use document::{
     inspect, load, load_with, unlock_for_session, viewable_bytes, DocInfo, PageInfo,
@@ -47,7 +47,8 @@ pub use security::{
     CopyHints, ProtectOptions, Protection, ProtectionInfo, UnlockReport,
 };
 pub use split::{
-    plan as plan_split, split_to_folder, split_to_folder_with, Part, SplitMode, Written,
+    plan as plan_split, split_edited_with, split_to_folder, split_to_folder_with, Part, SplitMode,
+    Written,
 };
 pub use stamp::{
     add_page_numbers, add_watermark, stamp_file, stamp_file_with, stamp_preview, Corner, Layer,

@@ -1,10 +1,10 @@
-// Edit state of the Pages tool: the operation list, undo/redo, and selection.
-// Nothing here touches the PDF; Save sends the list to Rust (SPEC section 3).
+// Edit state of the Page Editor: the operation list, page numbering, undo/redo and
+// selection. Nothing here touches the PDF; Save sends the list to Rust (SPEC section 3).
 
 // The selection Set is never mutated in place, only replaced, so a plain Set is
 // enough (SvelteSet would add reactivity we do not use).
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import type { DocInfo, PageInfo, PageOp } from '../api';
+import type { DocInfo, PageInfo, PageNumberOptions, PageOp } from '../api';
 
 export type Item =
   | { id: number; kind: 'page'; src: number; rotate: number }
@@ -25,21 +25,29 @@ export type BlankSize = 'same' | keyof typeof BLANK_SIZES;
 
 const HISTORY_LIMIT = 200;
 
+/** One undo step: the page list and the page numbering that go with it. */
+interface Snapshot {
+  items: Item[];
+  numbering: PageNumberOptions | null;
+}
+
 let info: DocInfo = { pages: [] };
 let nextId = 1;
 let items = $state.raw<Item[]>([]);
-let past = $state.raw<Item[][]>([]);
-let future = $state.raw<Item[][]>([]);
+let numbering = $state.raw<PageNumberOptions | null>(null);
+let past = $state.raw<Snapshot[]>([]);
+let future = $state.raw<Snapshot[]>([]);
 let selected = $state.raw<ReadonlySet<number>>(new Set());
 /** Last clicked item, the start of Shift-range selection and arrow navigation. */
 let anchor = $state<number | null>(null);
 
 const nativeRotate = (src: number) => info.pages[src - 1]?.rotate ?? 0;
+const wrap = (degrees: number) => ((degrees % 360) + 360) % 360;
 
 /** Total rotation to draw: the page's own /Rotate plus the user's turns. */
 export function displayRotation(item: Item): number {
   const base = item.kind === 'page' ? nativeRotate(item.src) : 0;
-  return (((base + item.rotate) % 360) + 360) % 360;
+  return wrap(base + item.rotate);
 }
 
 /** On-screen size in points, after rotation. */
@@ -54,10 +62,19 @@ export function visualSize(item: Item): { width: number; height: number } {
   return swap ? { width: p.height, height: p.width } : { width: p.width, height: p.height };
 }
 
-function commit(next: Item[]) {
-  past = [...past, items].slice(-HISTORY_LIMIT);
+function opsOf(list: readonly Item[]): PageOp[] {
+  return list.map((i) =>
+    i.kind === 'page'
+      ? { kind: 'page', page: i.src, rotate: i.rotate }
+      : { kind: 'blank', width: i.width, height: i.height, rotate: i.rotate }
+  );
+}
+
+function commit(next: Item[], nextNumbering: PageNumberOptions | null = numbering) {
+  past = [...past, { items, numbering }].slice(-HISTORY_LIMIT);
   future = [];
   items = next;
+  numbering = nextNumbering;
   pruneSelection();
 }
 
@@ -78,6 +95,10 @@ export const pageEdit = {
   get anchor() {
     return anchor;
   },
+  /** Page numbers added on Save, or `null`. Part of the undo history. */
+  get numbering() {
+    return numbering;
+  },
   get canUndo() {
     return past.length > 0;
   },
@@ -94,6 +115,7 @@ export const pageEdit = {
     info = docInfo;
     nextId = 1;
     items = docInfo.pages.map((_, i) => ({ id: nextId++, kind: 'page', src: i + 1, rotate: 0 }));
+    numbering = null;
     past = [];
     future = [];
     selected = new Set();
@@ -102,15 +124,15 @@ export const pageEdit = {
 
   undo() {
     if (!past.length) return;
-    future = [...future, items];
-    items = past[past.length - 1];
+    future = [...future, { items, numbering }];
+    ({ items, numbering } = past[past.length - 1]);
     past = past.slice(0, -1);
     pruneSelection();
   },
   redo() {
     if (!future.length) return;
-    past = [...past, items];
-    items = future[future.length - 1];
+    past = [...past, { items, numbering }];
+    ({ items, numbering } = future[future.length - 1]);
     future = future.slice(0, -1);
     pruneSelection();
   },
@@ -143,16 +165,57 @@ export const pageEdit = {
   clearSelection() {
     selected = new Set();
   },
+  /** Replaces the selection with the items at these 1-based grid positions. */
+  selectPositions(positions: Iterable<number>) {
+    const ids: number[] = [];
+    for (const p of positions) if (items[p - 1]) ids.push(items[p - 1].id);
+    selected = new Set(ids);
+    anchor = ids[0] ?? null;
+  },
+  invertSelection() {
+    selected = new Set(items.filter((i) => !selected.has(i.id)).map((i) => i.id));
+  },
+  /** Selects every item for which `test(item, position)` holds (position is 1-based). */
+  selectWhere(test: (item: Item, position: number) => boolean) {
+    selected = new Set(items.filter((it, k) => test(it, k + 1)).map((i) => i.id));
+    anchor = null;
+  },
+  /** Selects the pages that are wider than tall (landscape) or not (portrait), as shown. */
+  selectOrientation(orientation: 'landscape' | 'portrait') {
+    this.selectWhere((it) => {
+      const { width, height } = visualSize(it);
+      return orientation === 'landscape' ? width > height : height >= width;
+    });
+  },
+  /** 1-based grid positions of the selection, ascending. */
+  get selectedPositions(): number[] {
+    return items.flatMap((it, k) => (selected.has(it.id) ? [k + 1] : []));
+  },
 
   // Edits (each one is a single undo step) -------------------------------------
 
   /** Rotates the selection by `degrees` (90, -90 or 180). `ids` overrides it. */
   rotate(degrees: number, ids: ReadonlySet<number> = selected) {
     if (!ids.size) return;
-    commit(
-      items.map((i) =>
-        ids.has(i.id) ? { ...i, rotate: (((i.rotate + degrees) % 360) + 360) % 360 } : i
-      )
+    commit(items.map((i) => (ids.has(i.id) ? { ...i, rotate: wrap(i.rotate + degrees) } : i)));
+  },
+
+  /** Sets every item's extra turn (0/90/180/270), as planned by Rust. One undo step. */
+  setTurns(turns: readonly number[]) {
+    const next = items.map((i, k) => ({ ...i, rotate: wrap(turns[k] ?? 0) }));
+    if (next.every((it, k) => it.rotate === items[k].rotate)) return;
+    commit(next);
+  },
+  /** Current extra turns, one per item. */
+  get turns(): number[] {
+    return items.map((i) => i.rotate);
+  },
+  /** Geometry of the current list (before rotation), for planning rotations on it. */
+  pageGeometry(): PageInfo[] {
+    return items.map((i) =>
+      i.kind === 'page'
+        ? (info.pages[i.src - 1] ?? { width: 612, height: 792, rotate: 0 })
+        : { width: i.width, height: i.height, rotate: 0 }
     );
   },
 
@@ -182,6 +245,31 @@ export const pageEdit = {
     commit(next);
   },
 
+  /** Moves the selection (or `ids`) to the start or the end, keeping its order. */
+  moveToEdge(edge: 'start' | 'end', ids: ReadonlySet<number> = selected) {
+    if (!ids.size) return;
+    const moving = items.filter((i) => ids.has(i.id));
+    const rest = items.filter((i) => !ids.has(i.id));
+    const next = edge === 'start' ? [...moving, ...rest] : [...rest, ...moving];
+    if (next.every((it, k) => it.id === items[k].id)) return;
+    commit(next);
+  },
+
+  /** Copies the selection (or `ids`); each copy sits right after its original and is selected. */
+  duplicate(ids: ReadonlySet<number> = selected) {
+    if (!ids.size) return;
+    const copies: number[] = [];
+    const next = items.flatMap((i) => {
+      if (!ids.has(i.id)) return [i];
+      const copy = { ...i, id: nextId++ };
+      copies.push(copy.id);
+      return [i, copy];
+    });
+    commit(next);
+    selected = new Set(copies);
+    anchor = copies[0] ?? null;
+  },
+
   /** Inserts a blank page after the last selected page (or at the end). */
   insertBlank(size: BlankSize) {
     let at = items.length;
@@ -191,6 +279,12 @@ export const pageEdit = {
         break;
       }
     }
+    this.insertBlankAt(at, size);
+  },
+
+  /** Inserts a blank page so that it ends up at list index `at` (0 = first). */
+  insertBlankAt(at: number, size: BlankSize) {
+    at = Math.min(items.length, Math.max(0, at));
     let width: number, height: number;
     if (size === 'same') {
       const neighbour = items[at - 1] ?? items[at];
@@ -210,12 +304,25 @@ export const pageEdit = {
     anchor = blank.id;
   },
 
+  /** Inserts a blank page directly before or after the item `id`. */
+  insertBlankNextTo(id: number, side: 'before' | 'after', size: BlankSize) {
+    const k = items.findIndex((i) => i.id === id);
+    if (k >= 0) this.insertBlankAt(side === 'before' ? k : k + 1, size);
+  },
+
+  /** Adds page numbers on Save (or removes them with `null`). One undo step. */
+  setNumbering(options: PageNumberOptions | null) {
+    if (JSON.stringify(options) === JSON.stringify(numbering)) return;
+    commit(items, options);
+  },
+
   /** The list to send to Rust on Save. */
   toOps(): PageOp[] {
-    return items.map((i) =>
-      i.kind === 'page'
-        ? { kind: 'page', page: i.src, rotate: i.rotate }
-        : { kind: 'blank', width: i.width, height: i.height, rotate: i.rotate }
-    );
+    return opsOf(items);
+  },
+
+  /** The edited pages with these ids (default: the selection), in grid order. */
+  opsFor(ids: ReadonlySet<number> = selected): PageOp[] {
+    return opsOf(items.filter((i) => ids.has(i.id)));
   }
 };

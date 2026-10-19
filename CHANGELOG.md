@@ -4,7 +4,24 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - Unreleased
+
+### Changed
+
+- M8 Page Editor: "Pages" is now **Page Editor**, and Rotate, Split, Extract and Page numbers
+  moved into it (toolbar, right-click menu, options panel, live preview on the grid). Their options
+  are unchanged. Split and Extract now work on the pages as edited, including unsaved edits, and
+  page numbers are an undoable edit written on Save. The sidebar has 10 entries; the home screen
+  keeps a card for every task, and the old routes (`/pages`, `/split`, `/extract`, `/rotate`,
+  `/page-numbers`) open the Page Editor with the matching panel. New: Duplicate, Move to
+  start/end, Select menu (odd, even, range, landscape, portrait, invert), thumbnail zoom, "+"
+  between thumbnails to insert a blank page. `pdf-core` gains `split_edited_with` and
+  `save_edited_with`; `npm test` runs the new frontend tests.
+- Page Editor keyboard use: Ctrl+D duplicate, Ctrl+Shift+S, Ctrl+E and Ctrl+Shift+N toggle the
+  Split, Extract and Page numbers panels, Esc closes the panel (and returns focus to its toolbar
+  button). The page grid is a tab stop with a visible ring on the current page; arrow keys move
+  along the toolbar; Shift+F10 or the menu key opens the page menu; the right-click menu shows a
+  focus ring on the highlighted entry.
 
 ### Added
 

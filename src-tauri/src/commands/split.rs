@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use pdf_core::SplitMode;
+use pdf_core::{PageOp, SplitMode};
 use tauri::{AppHandle, State};
 
 use super::pages::SavedFile;
@@ -15,12 +15,16 @@ pub fn parse_page_ranges(text: String, page_count: u32) -> Result<Vec<(u32, u32)
     pdf_core::parse_ranges(&text, page_count).map_err(|e| e.to_string())
 }
 
-/// Splits a document into several files inside `out_dir`.
+/// Splits a document into several files inside `out_dir`. With `ops` the
+/// document is first arranged as the Page Editor shows it (unsaved edits
+/// included) and `mode` counts those pages.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn split_pdf(
     source: PathBuf,
     out_dir: PathBuf,
     mode: SplitMode,
+    ops: Option<Vec<PageOp>>,
     app: AppHandle,
     jobs: State<'_, Jobs>,
     job_id: String,
@@ -32,8 +36,9 @@ pub async fn split_pdf(
         return Err("Choose a folder to save the files in.".into());
     }
     let dir = out_dir.clone();
-    let written = jobs::run(&app, &jobs, job_id, move |p| {
-        pdf_core::split_to_folder_with(&source, &dir, &mode, p)
+    let written = jobs::run(&app, &jobs, job_id, move |p| match &ops {
+        Some(ops) => pdf_core::split_edited_with(&source, ops, &dir, &mode, p),
+        None => pdf_core::split_to_folder_with(&source, &dir, &mode, p),
     })
     .await?;
     written

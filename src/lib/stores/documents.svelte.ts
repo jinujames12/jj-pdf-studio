@@ -8,6 +8,7 @@ import { images } from './images.svelte';
 import { merge } from './merge.svelte';
 import { go, nav } from './nav.svelte';
 import { pageEdit } from './pageEdit.svelte';
+import { resetPanels } from './panels.svelte';
 import { toast } from './toast.svelte';
 
 export interface OpenDoc {
@@ -25,8 +26,6 @@ export interface OpenDoc {
 let current = $state.raw<OpenDoc | null>(null);
 let loading = $state(false);
 let dragging = $state(false);
-/** Set by tools that hold unsaved choices of their own (Rotate). */
-let toolDirty = $state(false);
 let counter = 0;
 
 export const documents = {
@@ -42,23 +41,17 @@ export const documents = {
   },
   set dragging(v: boolean) {
     dragging = v;
-  },
-  set toolDirty(v: boolean) {
-    toolDirty = v;
   }
 };
 
-/** Tools that keep working on the current document instead of jumping to Pages. */
+/** Screens that keep working on the current document instead of jumping to the Page Editor. */
 const STAY_IN_TOOL: string[] = [
-  'split',
-  'extract',
-  'rotate',
+  'page-editor',
   'resize',
   'compress',
   'unlock',
   'protect',
   'toimages',
-  'pagenumbers',
   'watermark',
   'properties'
 ];
@@ -67,7 +60,7 @@ export { folderOf } from '../paths';
 
 /** Opens `path` as the current document. Returns true on success. */
 export async function openPath(path: string): Promise<boolean> {
-  if (pageEdit.dirty || toolDirty) {
+  if (pageEdit.dirty) {
     const discard = await confirm('Opening another file will discard your unsaved changes.', {
       title: 'Unsaved changes',
       kind: 'warning',
@@ -94,6 +87,7 @@ export async function openPath(path: string): Promise<boolean> {
       pdf
     };
     pageEdit.reset(info);
+    resetPanels();
     return true;
   } catch (e) {
     if (!(e instanceof PasswordCancelled)) toast('error', errorMessage(e));
@@ -105,7 +99,7 @@ export async function openPath(path: string): Promise<boolean> {
 
 /**
  * Handles files the user picked or dropped. In Merge they are added to the list;
- * elsewhere the first PDF becomes the current document, shown in Pages unless a
+ * elsewhere the first PDF becomes the current document, shown in the Page Editor unless a
  * tool that works on the current document is already open.
  */
 export async function openFiles(paths: string[]) {
@@ -113,7 +107,7 @@ export async function openFiles(paths: string[]) {
   const pictures = paths.filter(isImage);
   if (nav.view === 'images') {
     if (pictures.length) await images.addPaths(pictures);
-    else toast('info', 'Only images can be added here. Use Merge or Pages for PDFs.');
+    else toast('info', 'Only images can be added here. Use Merge or Page Editor for PDFs.');
     return;
   }
   if (pdfs.length === 0) {
@@ -131,7 +125,7 @@ export async function openFiles(paths: string[]) {
     return;
   }
   if (await openPath(pdfs[0])) {
-    if (!STAY_IN_TOOL.includes(nav.view)) go('pages');
+    if (!STAY_IN_TOOL.includes(nav.view)) go('page-editor');
     if (pdfs.length > 1)
       toast('info', 'Opened the first file. Use Merge to combine several files.');
   }

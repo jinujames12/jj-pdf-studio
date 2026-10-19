@@ -165,19 +165,19 @@ jj-pdf-studio/
 ┌───────────────────────────────────────────────────────────────────┐
 │ [logo] JJ PDF Studio                      ☀/☾   ?   ⋯            │  title bar (custom, 44 px)
 ├──────────────┬────────────────────────────────────────────────────┤
-│  TOOLS       │  Merge PDFs                                [Save ▸] │  tool header
-│  ▣ Merge     │  ────────────────────────────────────────────────── │
-│  ▣ Pages     │                                                     │
-│  ▣ Split     │   ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                │
-│  ▣ Extract   │   │ 1  │ │ 2  │ │ 3  │ │ 4  │ │ +  │                │  thumbnail workspace
-│  ▣ Rotate    │   └────┘ └────┘ └────┘ └────┘ └────┘                │  (drag to reorder)
-│  ▣ Resize    │                                                     │
-│  ▣ Compress  │        Drop PDFs here or click to browse            │
-│  ▣ Images→PDF│                                                     │
-│  ▣ PDF→Images│                                                     │
+│  ORGANISE    │  Merge PDFs                                [Save ▸] │  tool header
+│  ▣ Page Editor│ ────────────────────────────────────────────────── │
+│  ▣ Merge     │                                                     │
+│  CONVERT     │   ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                │
+│  ▣ Images→PDF│   │ 1  │ │ 2  │ │ 3  │ │ 4  │ │ +  │                │  thumbnail workspace
+│  ▣ PDF→Images│   └────┘ └────┘ └────┘ └────┘ └────┘                │  (drag to reorder)
+│  OPTIMISE    │                                                     │
+│  ▣ Resize    │        Drop PDFs here or click to browse            │
+│  ▣ Compress  │                                                     │
+│  SECURITY    │                                                     │
 │  ▣ Unlock    │                                                     │
 │  ▣ Protect   │                                                     │
-│  ▣ Page nos. │                                                     │
+│  EDIT        │                                                     │
 │  ▣ Watermark │                                                     │
 │  ▣ Properties│                                                     │
 │              ├─────────────────────────────────────────────────────┤
@@ -185,13 +185,13 @@ jj-pdf-studio/
 └──────────────┴────────────────────────────────────────────────────┘
 ```
 
-- **Sidebar (220 px, collapsible to 64 px icons):** one entry per tool. "Pages" is the combined organiser (reorder, rotate, delete, insert blank) since those are usually done together.
+- **Sidebar (220 px, collapsible to 64 px icons):** Page Editor at the top as the main workspace (see 5.15), then the whole-file tools. Rotate, Split, Extract and Page numbers have no sidebar entries of their own; they live inside Page Editor with all their options.
 - **Workspace:** large thumbnail grid with page numbers. Click selects, Shift/Ctrl multi-select, drag to reorder, hover shows rotate and delete buttons. Double-click opens a larger preview.
 - **Options panel:** tool-specific settings at the bottom (or right on wide screens ≥ 1400 px).
 - **Primary action** always top right in brand colour: "Save merged PDF", "Split", "Compress".
 - **Home screen** (no file open): a grid of tool cards with icon, name and one-line description, plus a big drop zone. Drop a file anywhere and it opens in the Pages tool by default.
 - **Feedback:** progress bar in the tool header during jobs with Cancel; success toast with "Open file" and "Show in folder" buttons; errors in plain language ("This PDF needs a password to open. Enter it to continue.").
-- **Sidebar grouping:** with 14 tools, group them under small headings: _Organise_ (Merge, Pages, Split, Extract, Rotate), _Convert_ (Images to PDF, PDF to Images), _Optimise_ (Resize, Compress), _Security_ (Unlock, Protect), _Edit_ (Page numbers, Watermark, Properties).
+- **Sidebar grouping (10 entries):** _Organise_ (Page Editor, Merge), _Convert_ (Images to PDF, PDF to Images), _Optimise_ (Resize, Compress), _Security_ (Unlock, Protect), _Edit_ (Watermark, Properties). The home screen still shows a card for every task, including Split, Extract, Rotate and Page numbers; those cards open Page Editor with that panel already open, so people who look for "Split" still find it.
 - **Keyboard:** Ctrl+O open, Ctrl+S save, Ctrl+Z / Ctrl+Y undo/redo, Delete removes selected pages, Ctrl+A select all, R / Shift+R rotate right/left, arrows move selection.
 - **Window:** min 960×640, remembers size and position and last theme in `%APPDATA%\JJPDFStudio\settings.json` (portable mode: if a file named `portable` sits next to the exe, settings live beside the exe instead).
 
@@ -374,7 +374,88 @@ PDFs can carry two kinds of protection, and the tool explains which one a file h
 - "Remove all metadata" button for privacy before sharing (clears `/Info` and the XMP `/Metadata` stream).
 - Implementation: direct `/Info` dictionary edit in lopdf; XMP is removed rather than edited in v1.
 
-### 5.15 About
+### 5.15 Page Editor (combined workspace)
+
+**Name:** "Page Editor" replaces "Pages". It says what the screen does (edit the pages of one PDF), it reads well as the first sidebar item, and it matches what people know from Acrobat ("Organize Pages") and Stirling ("Page editor"). Internal route `/page-editor`, component `PageEditor.svelte`.
+
+**What lives here:** reorder, rotate, delete, insert blank page (from 5.2), plus Rotate (5.5), Split (5.3), Extract (5.4) and Page numbers (5.12). Sections 5.2 to 5.5 and 5.12 remain the source of truth for each tool's behaviour; this section only changes where they appear. **No option, mode, setting or output format is removed or reduced by the move.**
+
+**Layout**
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ Page Editor · report.pdf · 24 pages · 3 selected        [Undo][Redo] [Save ▸] │
+├───────────────────────────────────────────────────────────────────────┤
+│ ⟲ ⟳ │ 🗑 │ ＋Blank │ ✂ Split │ ⇪ Extract │ # Page numbers │ Select ▾ │ Zoom ─○─ │  toolbar
+├──────────────────────────────────────────────────────┬────────────────┤
+│                                                      │ Options panel  │
+│   ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐                       │ (context:      │
+│   │1 │ │2 │ │3 │ │4 │ │5 │ │6 │      thumbnail grid   │  Split, Extract,│
+│   └──┘ └──┘ └──┘ └──┘ └──┘ └──┘                       │  Rotate or Page │
+│                                                      │  numbers)       │
+└──────────────────────────────────────────────────────┴────────────────┘
+```
+
+- **Toolbar** (always visible): rotate left, rotate right, delete, insert blank, Split, Extract, Page numbers, a Select menu (All, None, Invert, Odd, Even, Range…, Landscape pages, Portrait pages), thumbnail zoom slider.
+- **Right-click on pages:** the same actions, plus Rotate 180°, Duplicate, Move to start, Move to end, Insert blank before or after.
+- **Options panel** (right, 320 px, collapsible): opens when the user picks Split, Extract, Rotate (advanced) or Page numbers and shows that tool's full settings. Only one panel is open at a time; closing it keeps the settings for the session.
+- **Live preview on the grid:** split boundaries show as tinted groups with "Part 1, Part 2…" labels; extract selection is highlighted; page number placement shows as a small overlay on each thumbnail.
+- **Two kinds of action**, made visible in the UI:
+  - _Edits to this document_ (reorder, rotate, delete, insert blank, page numbers) go into undo/redo history and are written when the user clicks **Save**.
+  - _Exports to new files_ (Split, Extract) run immediately from their panel with their own button ("Split into 4 files", "Extract 3 pages") and use the current edited state of the document, including unsaved edits. They don't change the open document.
+- **Keyboard:** everything in 4 (Ctrl+Z/Y, Delete, R/Shift+R, Ctrl+A), plus Ctrl+D duplicate, Ctrl+Shift+S split panel, Ctrl+E extract panel, Ctrl+Shift+N page numbers panel, Esc closes the panel.
+
+**Feature-parity checklist** (every line must still work after the move; turn each into a test or a manual check)
+
+_Pages (5.2):_
+
+- [ ] Drag to reorder single and multiple selected pages
+- [ ] Rotate per page and per selection, 90° steps, lossless via `/Rotate`
+- [ ] Delete selection; refuses to delete the last page
+- [ ] Insert blank via "+" between thumbnails and via toolbar; sizes Same as previous, A4, A3, A5, Letter, Legal
+- [ ] Undo/redo for every action; nothing written before Save
+- [ ] Status footer: page count, selection count, file size
+
+_Rotate (5.5):_
+
+- [ ] Rotate all, odd pages, even pages, custom range
+- [ ] 90° right, 90° left, 180°
+- [ ] "Make all pages portrait" and "Make all pages landscape"
+
+_Split (5.3):_
+
+- [ ] Every N pages (default 1)
+- [ ] By ranges with `end` keyword, live validation and grid highlighting
+- [ ] At selected pages via split markers between thumbnails
+- [ ] Output folder choice; `name_part01.pdf` and `name_p1-3.pdf` naming
+- [ ] Warning above 100 output files
+
+_Extract (5.4):_
+
+- [ ] Select on grid or type ranges (`2, 5-7`), kept in sync both ways
+- [ ] One PDF with all selected pages (default)
+- [ ] One PDF per selected page
+
+_Page numbers (5.12):_
+
+- [ ] 6 positions, margin, font size, colour
+- [ ] Formats `1`, `Page 1`, `Page 1 of N`, `1 / N`, custom with `{n}` and `{total}`
+- [ ] Start number and page range (skip cover)
+- [ ] Correct placement on rotated and mixed-size pages
+
+_Shared:_
+
+- [ ] Never overwrites the original; Save As prefilled
+- [ ] Password prompt for protected files (5.9) works when opening in Page Editor
+- [ ] Home screen cards for Split, Extract, Rotate and Page numbers open Page Editor with the right panel
+- [ ] Old routes (`/pages`, `/split`, `/extract`, `/rotate`, `/page-numbers`) redirect to Page Editor with the matching panel, so nothing breaks
+
+**Implementation notes**
+
+- One document state store (the operation list from 3) drives the grid, the panels and Save. Split and Extract call the existing `pdf-core` functions with the current operation list applied first, so no PDF logic is rewritten; this milestone is a frontend refactor plus a thin "apply ops then split/extract" command.
+- Keep each tool's settings form as its own component (`SplitOptions.svelte`, `ExtractOptions.svelte`, `RotateOptions.svelte`, `PageNumberOptions.svelte`) and mount it in the options panel, so the forms are moved, not rewritten.
+
+### 5.16 About
 
 - Logo, "JJ PDF Studio", version and build date, "Made by JJ Global", links to GitHub repo and issue tracker (open in default browser), license name, and a "Third-party licenses" button showing the bundled notices.
 
@@ -548,7 +629,8 @@ Release process: update `CHANGELOG.md` and the version in `package.json`, `src-t
 | **M5: Compress**                      | Lossless pipeline, image recompression presets, never-larger guarantee, result dialog                                                                               | Benchmarked on a set of scans, office exports and text PDFs; results in README                            |
 | **M6: Security**                      | Unlock (open password and restrictions, scanned-page detection), Protect (AES-256), password prompt when opening files in any tool                                  | Round-trip tests with RC4, AES-128 and AES-256 fixtures; output opens in Edge, Chrome, Acrobat Reader    |
 | **M7: Convert and edit**              | PDF to Images, Page numbers, Watermark (text and image), Properties                                                                                                 | Visual checks on rotated and mixed-size pages                                                             |
-| **M8: Polish and v1.0**               | Sidebar grouping, progress and cancel everywhere, keyboard shortcuts, About and third-party notices, real logo, README screenshots, accessibility pass, code signing (if approved) | v1.0.0 release published                                                                  |
+| **M8: Page Editor**                   | Combine Pages, Rotate, Split, Extract and Page numbers into one Page Editor screen (5.15): toolbar, right-click menu, options panel, live grid preview, route redirects, renamed sidebar with 10 entries | Every item in the 5.15 parity checklist passes; existing pdf-core tests still green |
+| **M9: Polish and v1.0**               | Sidebar grouping, progress and cancel everywhere, keyboard shortcuts, About and third-party notices, real logo, README screenshots, accessibility pass, code signing (if approved) | v1.0.0 release published                                                                  |
 | **v1.x**                              | OCR for scanned PDFs using the Windows built-in OCR engine (`Windows.Media.Ocr` via the `windows` crate, no download, adds an invisible text layer), N-up and booklet printing, flatten forms, reverse or interleave pages (for double-sided scans) |                                                                  |
 | **v2 ideas**                          | Font subsetting in compress, ARM64 build, translations, command-line mode reusing `pdf-core`                                                                        |                                                                                                           |
 

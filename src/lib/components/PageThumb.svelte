@@ -14,6 +14,8 @@
     pdf: PdfDoc;
     docKey: string;
     selected?: boolean;
+    /** The page the arrow keys move from; ringed while the grid has keyboard focus. */
+    current?: boolean;
     onselect?: (e: MouseEvent) => void;
     onpreview?: () => void;
     onrotate?: (degrees: number) => void;
@@ -27,6 +29,12 @@
     /** On-screen size and rotation, for pages that are not part of the Pages tool's document. */
     size?: { width: number; height: number };
     rotation?: number;
+    /** Thumbnail width in pixels (Page Editor zoom). */
+    width?: number;
+    /** A page number drawn on the thumbnail, as it will be placed on the saved page. */
+    overlay?: { text: string; position: string; color: string } | null;
+    /** Right-click on the thumbnail. */
+    oncontext?: (e: MouseEvent) => void;
   }
 
   let {
@@ -35,6 +43,7 @@
     pdf,
     docKey,
     selected = false,
+    current = false,
     onselect,
     onpreview,
     onrotate,
@@ -43,7 +52,10 @@
     tint = null,
     label,
     size: sizeOverride,
-    rotation: rotationOverride
+    rotation: rotationOverride,
+    width = THUMB_WIDTH,
+    overlay = null,
+    oncontext
   }: Props = $props();
 
   let cell: HTMLElement;
@@ -53,7 +65,7 @@
   const size = $derived(sizeOverride ?? visualSize(item));
   const rotation = $derived(rotationOverride ?? displayRotation(item));
   const aspect = $derived(size.width / size.height);
-  const height = $derived(Math.min(Math.round(THUMB_WIDTH / aspect), 260));
+  const height = $derived(Math.min(Math.round(width / aspect), Math.round(width * 1.625)));
 
   // Render lazily: only while the cell is near the viewport. Leaving it cancels
   // a render that has not started yet; the drawn canvas is kept as it is.
@@ -103,6 +115,7 @@
 <div
   class="cell"
   class:selected
+  class:current
   class:tint-a={tint === 'a'}
   class:tint-b={tint === 'b'}
   data-id={item.id}
@@ -112,12 +125,22 @@
   tabindex="-1"
   onclick={onselect}
   ondblclick={dblclick}
+  oncontextmenu={oncontext}
+  style:--thumb-w="{width}px"
 >
   <div class="paper" style:aspect-ratio={aspect} style:max-height="{height}px">
     {#if item.kind === 'page'}
       <canvas bind:this={canvas} aria-label="Page {position}"></canvas>
     {:else}
       <span class="blank-label">Blank</span>
+    {/if}
+    {#if overlay}
+      <span
+        class="stamp {overlay.position}"
+        style:color={overlay.color}
+        style:font-size="{Math.max(7, Math.round(width / 16))}px"
+        aria-hidden="true">{overlay.text}</span
+      >
     {/if}
     {#if !readonly}
       <div class="actions">
@@ -172,6 +195,10 @@
     border-color: var(--primary);
     background: var(--selected-bg);
   }
+  :global(.grid:focus-visible) .cell.current {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
   .cell.tint-a {
     background: color-mix(in srgb, var(--primary) 14%, transparent);
   }
@@ -182,7 +209,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 160px;
+    width: var(--thumb-w, 160px);
     border-radius: var(--radius-thumb);
     background: #fff;
     box-shadow: var(--shadow-card);
@@ -199,7 +226,7 @@
     font-size: var(--text-caption);
   }
   .number {
-    max-width: 160px;
+    max-width: var(--thumb-w, 160px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -210,6 +237,40 @@
   .selected .number {
     color: var(--primary);
     font-weight: 600;
+  }
+  /* Page-number preview: a small label near the edge the number will be placed at. */
+  .stamp {
+    position: absolute;
+    padding: 0 2px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 70%);
+    font-family: Helvetica, Arial, sans-serif;
+    line-height: 1.3;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .stamp.top-left,
+  .stamp.top-center,
+  .stamp.top-right {
+    top: 4%;
+  }
+  .stamp.bottom-left,
+  .stamp.bottom-center,
+  .stamp.bottom-right {
+    bottom: 4%;
+  }
+  .stamp.top-left,
+  .stamp.bottom-left {
+    left: 5%;
+  }
+  .stamp.top-right,
+  .stamp.bottom-right {
+    right: 5%;
+  }
+  .stamp.top-center,
+  .stamp.bottom-center {
+    left: 50%;
+    transform: translateX(-50%);
   }
   .actions {
     position: absolute;

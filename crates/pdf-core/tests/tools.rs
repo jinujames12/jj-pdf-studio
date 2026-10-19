@@ -344,3 +344,104 @@ fn make_all_pages_landscape_turns_only_the_portrait_ones() {
     // Page 2 was already turned sideways, so only page 1 needs a turn.
     assert_eq!(sideways, [90, 90]);
 }
+
+// Page Editor: export and save from an edited operation list -------------------
+
+#[test]
+fn split_edited_cuts_the_edited_pages_and_names_files_after_the_source() {
+    use pdf_core::split_edited_with;
+    let t = Tmp::new("split-edited");
+    let src = t.path("report.pdf");
+    write_pdf(&src, "R", 4);
+    let out = t.0.join("out");
+    std::fs::create_dir(&out).unwrap();
+    // Edited document: 3, a blank page, 1, 3 again (page 2 and 4 deleted).
+    let ops = [
+        page(3, 0),
+        PageOp::Blank {
+            width: 100.0,
+            height: 100.0,
+            rotate: 0,
+        },
+        page(1, 90),
+        page(3, 0),
+    ];
+    let mode = SplitMode::Every { n: 2 };
+    let written = split_edited_with(&src, &ops, &out, &mode, &pdf_core::Silent).unwrap();
+    let names: Vec<_> = written
+        .iter()
+        .map(|w| w.path.file_name().unwrap().to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(names, ["report_part01.pdf", "report_part02.pdf"]);
+    let first = Document::load(&written[0].path).unwrap();
+    assert_eq!(first.get_pages().len(), 2);
+    assert_eq!(markers(&first)[0], "R-3");
+    let second = Document::load(&written[1].path).unwrap();
+    assert_eq!(markers(&second), ["R-1", "R-3"]);
+    // The source is untouched.
+    assert_eq!(inspect(&src).unwrap().pages.len(), 4);
+    // A page number beyond the edited list is refused, not silently clamped.
+    let bad = SplitMode::Pages { pages: vec![5] };
+    assert!(split_edited_with(&src, &ops, &out, &bad, &pdf_core::Silent).is_err());
+}
+
+#[test]
+fn save_edited_numbers_pages_by_their_final_position() {
+    use pdf_core::{save_edited_with, Corner, PageNumberOptions};
+    let t = Tmp::new("save-edited");
+    let src = t.path("in.pdf");
+    write_pdf(&src, "S", 3);
+    let out = t.path("out.pdf");
+    let opts = PageNumberOptions {
+        position: Corner::BottomCenter,
+        margin_mm: 10.0,
+        font_size: 11.0,
+        color: "#000000".into(),
+        format: "Page {n} of {total}".into(),
+        start: 1,
+        pages: Some("2-end".into()),
+    };
+    // Reversed and one page deleted: two pages, the first is the "cover".
+    let ops = [page(3, 0), page(1, 0)];
+    save_edited_with(&src, &out, &ops, Some(&opts), &pdf_core::Silent).unwrap();
+    let doc = Document::load(&out).unwrap();
+    let ids: Vec<_> = doc.get_pages().into_values().collect();
+    let text = |id| {
+        let content = doc.get_page_content(id);
+        String::from_utf8_lossy(&content).into_owned()
+    };
+    assert!(!text(ids[0]).contains("Page 1"));
+    assert!(text(ids[0]).contains("S-3"));
+    assert!(text(ids[1]).contains("(Page 1 of 1)"));
+    assert!(text(ids[1]).contains("S-1"));
+    // Without numbering it is plain `save_pages`.
+    let plain = t.path("plain.pdf");
+    save_edited_with(&src, &plain, &ops, None, &pdf_core::Silent).unwrap();
+    let doc = Document::load(&plain).unwrap();
+    let ids: Vec<_> = doc.get_pages().into_values().collect();
+    assert!(!String::from_utf8_lossy(&doc.get_page_content(ids[1])).contains("Page"));
+}
+
+#[test]
+fn rotation_can_be_planned_for_an_edited_page_list() {
+    use pdf_core::PageInfo;
+    // The Page Editor passes the geometry of its current list: a landscape
+    // blank, then a portrait page that is already turned on screen.
+    let pages = [
+        PageInfo {
+            width: 300.0,
+            height: 200.0,
+            rotate: 0,
+        },
+        PageInfo {
+            width: 200.0,
+            height: 300.0,
+            rotate: 0,
+        },
+    ];
+    let action = RotateAction::Orient {
+        orientation: pdf_core::Orientation::Portrait,
+    };
+    let turns = plan_rotation(&pages, &[0, 0], &action).unwrap();
+    assert_eq!(turns, [90, 0]);
+}

@@ -23,10 +23,24 @@
 **Organise**
 
 - **Merge** several PDFs into one, with optional bookmarks
-- **Pages**: reorder, rotate, delete and insert blank pages, with undo and redo
-- **Split** a PDF by page count, ranges or markers
-- **Extract** selected pages
-- **Rotate** all or some pages, losslessly
+- **Page Editor**: the main workspace for one PDF. A toolbar, a right-click menu and a thumbnail
+  grid cover reordering (drag), rotating, deleting, duplicating, moving and inserting blank
+  pages (A4, A3, A5, Letter, Legal or the size of the neighbouring page), with undo and redo and
+  a Select menu (all, none, invert, odd, even, range, landscape, portrait). An options panel on
+  the right holds the full settings of four more tools:
+  - **Split**: every N pages, by ranges such as `1-3, 4-8, 9-end`, or at markers you place
+    between thumbnails. The grid shows the parts as tinted groups.
+  - **Extract**: pick pages on the grid or type `2, 5-7`; one PDF or one PDF per page.
+  - **Rotate**: all, odd, even or chosen pages by 90° or 180°, or make every page portrait or
+    landscape.
+  - **Page numbers**: six positions, formats like "Page 1 of N", start number and page range,
+    previewed on each thumbnail.
+
+  Edits (reorder, rotate, delete, blank pages, page numbers) are written when you save. Split and
+  Extract write new files straight away from the pages as they are shown, unsaved edits included.
+  The original is never changed.
+
+- **Merge** several PDFs into one, with optional bookmarks
 
 **Convert**
 
@@ -45,10 +59,17 @@
 
 **Edit**
 
-- **Page numbers**, **Watermark** (text or picture) and **Properties** (metadata)
+- **Watermark** (text or picture) and **Properties** (metadata)
 
-Every long job shows a progress bar with a **Cancel** button (or press Esc). Press **F1** in the
-app for the keyboard shortcuts.
+Every long job, Split and Extract included, shows a progress bar with a **Cancel** button (or
+press Esc). The home screen has a card for every task, including Split, Extract, Rotate and Page
+numbers; those open the Page Editor with the matching panel.
+
+**Page Editor shortcuts:** Ctrl+Z / Ctrl+Y undo and redo, Ctrl+A select all, Delete remove, R /
+Shift+R rotate right / left, Ctrl+D duplicate, Ctrl+Shift+S Split panel, Ctrl+E Extract panel,
+Ctrl+Shift+N Page numbers panel, Esc close the panel, arrow keys move the selection, Enter
+previews a page, Shift+F10 opens the page menu. The toolbar, menus and panel work with the
+keyboard alone (arrow keys move along the toolbar). Press **F1** in the app for the full list.
 
 ## Download
 
@@ -78,15 +99,14 @@ SHA-256 checksums published with each release.
 4. Use **Open file** or **Show in folder** in the message that appears.
 
 <p align="center">
-  <img src="docs/screenshots/pages.svg" alt="The Pages tool with a few pages selected" width="480" />
+  <img src="docs/screenshots/pages.svg" alt="The Page Editor with a few pages selected" width="480" />
   <img src="docs/screenshots/dark-theme.svg" alt="A tool in the dark theme" width="480" />
 </p>
 
 ## Limitations
 
-TODO: fill in as the tools land. Known from the plan: compression only recompresses common image
-types and leaves fonts alone; password-protected PDFs are not supported yet; form fields may not
-stay interactive after merging or resizing.
+Form fields may not stay interactive after merging or resizing. PDFs that need a password to open
+ask for it first; passwords are never guessed.
 
 - **Resize** moves links and comments with the page, but links that point to a position inside the
   document keep their old coordinates. In "Change page size only" mode, content larger than the new

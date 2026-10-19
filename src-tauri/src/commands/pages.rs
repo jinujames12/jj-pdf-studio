@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use pdf_core::{DocInfo, PageOp};
+use pdf_core::{DocInfo, PageNumberOptions, PageOp};
 use serde::Serialize;
 use tauri::ipc::Response;
 use tauri::{AppHandle, State};
@@ -57,12 +57,15 @@ pub async fn read_pdf(path: PathBuf, allowed: State<'_, Allowed>) -> Result<Resp
     Ok(Response::new(bytes))
 }
 
-/// Writes a new PDF made from `ops`; never overwrites the source.
+/// Writes a new PDF made from `ops`, with page numbers on top when `numbering`
+/// is given; never overwrites the source.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn save_pages(
     source: PathBuf,
     output: PathBuf,
     ops: Vec<PageOp>,
+    numbering: Option<PageNumberOptions>,
     app: AppHandle,
     jobs: State<'_, Jobs>,
     job_id: String,
@@ -72,7 +75,7 @@ pub async fn save_pages(
     require_pdf_extension(&output)?;
     let out = output.clone();
     let size = jobs::run(&app, &jobs, job_id, move |p| {
-        pdf_core::save_pages_with(&source, &out, &ops, p)
+        pdf_core::save_edited_with(&source, &out, &ops, numbering.as_ref(), p)
     })
     .await?;
     let output = canonical(&output)?;
