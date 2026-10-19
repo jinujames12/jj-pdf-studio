@@ -11,3 +11,5 @@ repository.workspace = true
 lopdf = "0.45"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
+# Image decoding for Images to PDF. Only the formats SPEC 5.8 lists are enabled.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "gif", "tiff", "webp"] }

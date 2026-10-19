@@ -6,6 +6,12 @@
   import ToolPlaceholder from './lib/components/ToolPlaceholder.svelte';
   import Toasts from './lib/components/Toasts.svelte';
   import Pages from './lib/tools/Pages.svelte';
+  import Merge from './lib/tools/Merge.svelte';
+  import Split from './lib/tools/Split.svelte';
+  import Extract from './lib/tools/Extract.svelte';
+  import Rotate from './lib/tools/Rotate.svelte';
+  import Resize from './lib/tools/Resize.svelte';
+  import Images from './lib/tools/Images.svelte';
   import { nav } from './lib/stores/nav.svelte';
   import { tools } from './lib/tools';
   import { onMount } from 'svelte';
@@ -15,7 +21,8 @@
 
   const tool = $derived(tools.find((t) => t.id === nav.view));
 
-  // Files dropped anywhere on the window open in the Pages tool. Tauri reports
+  // Files dropped anywhere on the window open in the Pages tool (or join the list in Merge or
+  // Images to PDF). Tauri reports
   // drops through the webview (HTML5 drop events do not fire) with real paths.
   onMount(() => {
     if (!inTauri()) return;
@@ -47,6 +54,18 @@
             <About />
           {:else if nav.view === 'pages'}
             <Pages />
+          {:else if nav.view === 'merge'}
+            <Merge />
+          {:else if nav.view === 'split'}
+            <Split />
+          {:else if nav.view === 'extract'}
+            <Extract />
+          {:else if nav.view === 'rotate'}
+            <Rotate />
+          {:else if nav.view === 'resize'}
+            <Resize />
+          {:else if nav.view === 'images'}
+            <Images />
           {:else if tool}
             <ToolPlaceholder {tool} />
           {/if}

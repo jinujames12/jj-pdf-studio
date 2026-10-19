@@ -12,11 +12,11 @@ use super::{canonical, Allowed};
 
 #[derive(Serialize)]
 pub struct SavedFile {
-    path: String,
-    size: u64,
+    pub path: String,
+    pub size: u64,
 }
 
-fn require_pdf_extension(path: &std::path::Path) -> Result<(), String> {
+pub(super) fn require_pdf_extension(path: &std::path::Path) -> Result<(), String> {
     match path.extension().and_then(|e| e.to_str()) {
         Some(e) if e.eq_ignore_ascii_case("pdf") => Ok(()),
         _ => Err("Please choose a file ending in .pdf.".into()),

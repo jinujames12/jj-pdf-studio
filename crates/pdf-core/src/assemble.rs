@@ -168,8 +168,12 @@ pub fn save_pages(source: &Path, output: &Path, ops: &[PageOp]) -> Result<u64> {
     }
     let mut doc = document::load(source)?;
     assemble(&mut doc, ops)?;
-    // Write beside the target first so a failure never leaves a truncated PDF
-    // at the chosen name.
+    write_atomic(&mut doc, output)
+}
+
+/// Saves `doc` to `output` through a temporary file beside it, so a failure
+/// never leaves a truncated PDF at the chosen name. Returns the size in bytes.
+pub(crate) fn write_atomic(doc: &mut Document, output: &Path) -> Result<u64> {
     let mut tmp = output.as_os_str().to_owned();
     tmp.push(".tmp");
     let tmp = std::path::PathBuf::from(tmp);

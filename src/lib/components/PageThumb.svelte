@@ -13,22 +13,45 @@
     position: number;
     pdf: PdfDoc;
     docKey: string;
-    selected: boolean;
-    onselect: (e: MouseEvent) => void;
-    onpreview: () => void;
-    onrotate: (degrees: number) => void;
-    ondelete: () => void;
+    selected?: boolean;
+    onselect?: (e: MouseEvent) => void;
+    onpreview?: () => void;
+    onrotate?: (degrees: number) => void;
+    ondelete?: () => void;
+    /** Hides the rotate and delete buttons (view-only grids). */
+    readonly?: boolean;
+    /** Alternating background tint, used to show which output file a page lands in. */
+    tint?: 'a' | 'b' | null;
+    /** Text under the thumbnail instead of the position number. */
+    label?: string;
+    /** On-screen size and rotation, for pages that are not part of the Pages tool's document. */
+    size?: { width: number; height: number };
+    rotation?: number;
   }
 
-  let { item, position, pdf, docKey, selected, onselect, onpreview, onrotate, ondelete }: Props =
-    $props();
+  let {
+    item,
+    position,
+    pdf,
+    docKey,
+    selected = false,
+    onselect,
+    onpreview,
+    onrotate,
+    ondelete,
+    readonly = false,
+    tint = null,
+    label,
+    size: sizeOverride,
+    rotation: rotationOverride
+  }: Props = $props();
 
   let cell: HTMLElement;
   let canvas = $state<HTMLCanvasElement>();
   let visible = $state(false);
 
-  const size = $derived(visualSize(item));
-  const rotation = $derived(displayRotation(item));
+  const size = $derived(sizeOverride ?? visualSize(item));
+  const rotation = $derived(rotationOverride ?? displayRotation(item));
   const aspect = $derived(size.width / size.height);
   const height = $derived(Math.min(Math.round(THUMB_WIDTH / aspect), 260));
 
@@ -48,7 +71,7 @@
   // Buttons on the thumbnail have their own meaning; a double click on them
   // must not also open the preview.
   function dblclick(e: MouseEvent) {
-    if (!(e.target as HTMLElement).closest('.thumb-btn')) onpreview();
+    if (!(e.target as HTMLElement).closest('.thumb-btn')) onpreview?.();
   }
 
   $effect(() => {
@@ -80,6 +103,8 @@
 <div
   class="cell"
   class:selected
+  class:tint-a={tint === 'a'}
+  class:tint-b={tint === 'b'}
   data-id={item.id}
   bind:this={cell}
   role="option"
@@ -94,19 +119,21 @@
     {:else}
       <span class="blank-label">Blank</span>
     {/if}
-    <div class="actions">
-      <button class="thumb-btn" title="Rotate left (Shift+R)" onclick={() => onrotate(-90)}>
-        <RotateCcw size={14} strokeWidth={1.75} />
-      </button>
-      <button class="thumb-btn" title="Rotate right (R)" onclick={() => onrotate(90)}>
-        <RotateCw size={14} strokeWidth={1.75} />
-      </button>
-      <button class="thumb-btn danger" title="Delete (Del)" onclick={ondelete}>
-        <Trash2 size={14} strokeWidth={1.75} />
-      </button>
-    </div>
+    {#if !readonly}
+      <div class="actions">
+        <button class="thumb-btn" title="Rotate left (Shift+R)" onclick={() => onrotate?.(-90)}>
+          <RotateCcw size={14} strokeWidth={1.75} />
+        </button>
+        <button class="thumb-btn" title="Rotate right (R)" onclick={() => onrotate?.(90)}>
+          <RotateCw size={14} strokeWidth={1.75} />
+        </button>
+        <button class="thumb-btn danger" title="Delete (Del)" onclick={ondelete}>
+          <Trash2 size={14} strokeWidth={1.75} />
+        </button>
+      </div>
+    {/if}
   </div>
-  <span class="number">{position}</span>
+  <span class="number" title={label}>{label ?? position}</span>
 </div>
 
 <style>
@@ -130,6 +157,12 @@
     border-color: var(--primary);
     background: var(--selected-bg);
   }
+  .cell.tint-a {
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+  .cell.tint-b {
+    background: color-mix(in srgb, var(--warning) 18%, transparent);
+  }
   .paper {
     position: relative;
     display: grid;
@@ -151,6 +184,10 @@
     font-size: var(--text-caption);
   }
   .number {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--text-muted);
     font-size: var(--text-caption);
     font-variant-numeric: tabular-nums;

@@ -68,15 +68,27 @@ pub fn inspect(path: &Path) -> Result<DocInfo> {
 }
 
 pub(crate) fn page_info(doc: &Document, page: ObjectId) -> PageInfo {
+    let b = page_box(doc, page);
+    PageInfo {
+        width: b[2] - b[0],
+        height: b[3] - b[1],
+        rotate: effective_rotate(doc, page),
+    }
+}
+
+/// The visible box of a page as `[x0, y0, x1, y1]` with `x0 < x1` and
+/// `y0 < y1`: the CropBox, else the MediaBox, else US Letter.
+pub(crate) fn page_box(doc: &Document, page: ObjectId) -> [f64; 4] {
     let b = inherited(doc, page, b"CropBox")
         .and_then(|o| box_of(doc, &o))
         .or_else(|| inherited(doc, page, b"MediaBox").and_then(|o| box_of(doc, &o)))
         .unwrap_or(FALLBACK_BOX);
-    PageInfo {
-        width: (b[2] - b[0]).abs(),
-        height: (b[3] - b[1]).abs(),
-        rotate: effective_rotate(doc, page),
-    }
+    [
+        b[0].min(b[2]),
+        b[1].min(b[3]),
+        b[0].max(b[2]),
+        b[1].max(b[3]),
+    ]
 }
 
 pub(crate) fn effective_rotate(doc: &Document, page: ObjectId) -> i32 {

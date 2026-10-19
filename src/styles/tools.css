@@ -1,0 +1,98 @@
+/* Controls shared by the tool views (Merge, Split, Extract, Rotate). */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease);
+}
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+.btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.btn.primary:active:not(:disabled) {
+  background: var(--primary-pressed);
+}
+
+.tool-toolbar select,
+.tool-toolbar input[type='text'],
+.tool-toolbar input[type='number'] {
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+.tool-toolbar input[type='number'] {
+  width: 72px;
+}
+.tool-toolbar input.invalid {
+  border-color: var(--danger);
+}
+.tool-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Two-or-more way switch, e.g. File view / Page view. */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+.segmented button {
+  height: 26px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.segmented button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: var(--text-caption);
+}
+
+/* Thumbnail grid used inside ToolFrame. */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+  justify-items: center;
+  align-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+.page-grid .ghost {
+  opacity: 0.35;
+}

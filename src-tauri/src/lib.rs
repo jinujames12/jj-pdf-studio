@@ -119,6 +119,16 @@ pub fn run() {
             commands::pages::save_pages,
             commands::pages::open_saved,
             commands::pages::reveal_saved,
+            commands::merge::merge_pdfs,
+            commands::images::open_image,
+            commands::images::image_thumbnail,
+            commands::images::images_to_pdf,
+            commands::images::images_to_folder,
+            commands::resize::plan_resize,
+            commands::resize::resize_pdf,
+            commands::split::parse_page_ranges,
+            commands::split::split_pdf,
+            commands::rotate::plan_rotation,
         ])
         .run(tauri::generate_context!())
         .expect("error while running JJ PDF Studio");

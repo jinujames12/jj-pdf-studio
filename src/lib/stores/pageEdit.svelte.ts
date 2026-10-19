@@ -10,6 +10,9 @@ export type Item =
   | { id: number; kind: 'page'; src: number; rotate: number }
   | { id: number; kind: 'blank'; width: number; height: number; rotate: number };
 
+/** An item that is a page of the source document. */
+export type PageItem = Extract<Item, { kind: 'page' }>;
+
 /** Blank page sizes in PDF points. */
 export const BLANK_SIZES = {
   A4: [595, 842],

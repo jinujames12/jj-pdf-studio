@@ -59,6 +59,12 @@ TODO: fill in as the tools land. Known from the plan: compression only recompres
 types and leaves fonts alone; password-protected PDFs are not supported yet; form fields may not
 stay interactive after merging or resizing.
 
+- **Resize** moves links and comments with the page, but links that point to a position inside the
+  document keep their old coordinates. In "Change page size only" mode, content larger than the new
+  page is cropped by the page edge.
+- **Images to PDF** reads JPG, PNG, BMP, GIF (first frame), TIFF (first page) and WebP. CMYK and
+  other unusual encodings are not tested and may be refused with a "could not be read" message.
+
 ## Building from source
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
