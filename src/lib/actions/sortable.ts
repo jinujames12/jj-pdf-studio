@@ -9,6 +9,8 @@ export interface SortableOptions {
   draggable: string;
   /** Called with the dragged element's `data-id` and its new index. */
   onmove: (id: number, newIndex: number) => void;
+  /** Called after every drag, moved or not; views bump a key to rebuild the list. */
+  onend?: () => void;
 }
 
 export function sortable(node: HTMLElement, options: SortableOptions) {
@@ -27,6 +29,7 @@ export function sortable(node: HTMLElement, options: SortableOptions) {
       from.removeChild(item);
       from.insertBefore(item, from.children[oldIndex] ?? null);
       if (oldIndex !== newIndex) options.onmove(Number(item.dataset.id), newIndex);
+      options.onend?.();
     }
   });
   return { destroy: () => instance.destroy() };

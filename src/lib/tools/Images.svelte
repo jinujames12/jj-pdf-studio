@@ -26,6 +26,7 @@
   let quality = $state<ImageOptions['quality']>('keep');
   let output = $state<'one' | 'each'>('one');
   let saving = $state(false);
+  let listVersion = $state(0);
 
   const items = $derived(images.items);
   const fitToImage = $derived(paper.kind === 'fit');
@@ -203,16 +204,22 @@
     class="page-grid"
     role="list"
     aria-label="Images to convert"
-    use:sortable={{ draggable: '.image-card', onmove: (id, to) => images.move(id, to) }}
+    use:sortable={{
+      draggable: '.image-card',
+      onmove: (id, to) => images.move(id, to),
+      onend: () => listVersion++
+    }}
   >
-    {#each items as item, i (item.id)}
-      <ImageCard
-        {item}
-        position={i + 1}
-        onrotate={(deg) => images.rotate(item.id, deg)}
-        onremove={() => images.remove(item.id)}
-      />
-    {/each}
+    {#key listVersion}
+      {#each items as item, i (item.id)}
+        <ImageCard
+          {item}
+          position={i + 1}
+          onrotate={(deg) => images.rotate(item.id, deg)}
+          onremove={() => images.remove(item.id)}
+        />
+      {/each}
+    {/key}
   </div>
 
   {#snippet footer()}

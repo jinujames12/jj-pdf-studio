@@ -23,7 +23,7 @@
 <section class="about">
   <img src={logoUrl} alt="JJ PDF Studio logo" width="96" height="96" />
   <h1>JJ PDF Studio</h1>
-  <p class="tagline">Free, offline PDF tools for Windows.</p>
+  <p class="tagline">PDF tool developed by James &amp; James LLP</p>
 
   <dl>
     <dt>Version</dt>
@@ -31,7 +31,7 @@
     <dt>Core library</dt>
     <dd>pdf-core {coreVersion}</dd>
     <dt>Made by</dt>
-    <dd>JJ Global</dd>
+    <dd>James &amp; James LLP</dd>
     <dt>License</dt>
     <dd>Apache-2.0</dd>
   </dl>

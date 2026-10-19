@@ -24,6 +24,9 @@
   let grid = $state<HTMLElement>();
   let blankSize = $state<BlankSize>('same');
   let saving = $state(false);
+  // Bumped after every drag so the grid is rebuilt from the state; Sortable's own
+  // DOM moves must never be what the user sees.
+  let gridVersion = $state(0);
 
   const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -48,6 +51,7 @@
         from.insertBefore(item, from.children[oldIndex] ?? null);
         const id = Number(item.dataset.id);
         if (oldIndex !== newIndex) edit.move(id, newIndex);
+        gridVersion++;
       }
     });
     return () => sortable.destroy();
@@ -236,19 +240,21 @@
         aria-label="Pages"
         tabindex="-1"
       >
-        {#each edit.items as item, i (item.id)}
-          <PageThumb
-            {item}
-            position={i + 1}
-            pdf={doc.pdf}
-            docKey={doc.key}
-            selected={edit.selected.has(item.id)}
-            onselect={(e) => click(item.id, e)}
-            onpreview={() => preview.open(item.id)}
-            onrotate={(deg) => edit.rotate(deg, new Set([item.id]))}
-            ondelete={() => removeOrWarn(new Set([item.id]))}
-          />
-        {/each}
+        {#key gridVersion}
+          {#each edit.items as item, i (item.id)}
+            <PageThumb
+              {item}
+              position={i + 1}
+              pdf={doc.pdf}
+              docKey={doc.key}
+              selected={edit.selected.has(item.id)}
+              onselect={(e) => click(item.id, e)}
+              onpreview={() => preview.open(item.id)}
+              onrotate={(deg) => edit.rotate(deg, new Set([item.id]))}
+              ondelete={() => removeOrWarn(new Set([item.id]))}
+            />
+          {/each}
+        {/key}
       </div>
     </div>
 

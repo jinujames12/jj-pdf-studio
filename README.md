@@ -80,4 +80,4 @@ Code: [Apache-2.0](LICENSE). The JJ name and logo are not covered by that licens
 
 Third-party licenses: TODO (a `THIRD_PARTY_NOTICES.md` will be generated in CI).
 
-Made by JJ Global.
+Made by James & James LLP.

@@ -16,6 +16,7 @@
 
   let bookmarks = $state(true);
   let saving = $state(false);
+  let listVersion = $state(0);
 
   const files = $derived(merge.files);
 
@@ -136,55 +137,68 @@
       class="page-grid"
       role="list"
       aria-label="Pages to merge"
-      use:sortable={{ draggable: '.cell', onmove: (id, to) => merge.movePage(id, to) }}
+      use:sortable={{
+        draggable: '.cell',
+        onmove: (id, to) => merge.movePage(id, to),
+        onend: () => listVersion++
+      }}
     >
-      {#each entries as entry, i (entry.id)}
-        {@const file = entryFile(entry)}
-        {@const geo = geometry(file, entry.src, entry.rotate)}
-        <PageThumb
-          item={{ id: entry.id, kind: 'page', src: entry.src, rotate: entry.rotate }}
-          position={i + 1}
-          pdf={file.pdf}
-          docKey={file.key}
-          size={geo.size}
-          rotation={geo.rotation}
-          label="{i + 1} · {file.stem} p{entry.src}"
-          onrotate={(deg) => merge.rotatePage(entry.id, deg)}
-          ondelete={() => removePage(entry.id)}
-        />
-      {/each}
+      {#key listVersion}
+        {#each entries as entry, i (entry.id)}
+          {@const file = entryFile(entry)}
+          {@const geo = geometry(file, entry.src, entry.rotate)}
+          <PageThumb
+            item={{ id: entry.id, kind: 'page', src: entry.src, rotate: entry.rotate }}
+            position={i + 1}
+            pdf={file.pdf}
+            docKey={file.key}
+            size={geo.size}
+            rotation={geo.rotation}
+            label="{i + 1} · {file.stem} p{entry.src}"
+            onrotate={(deg) => merge.rotatePage(entry.id, deg)}
+            ondelete={() => removePage(entry.id)}
+          />
+        {/each}
+      {/key}
     </div>
   {:else}
     <div
       class="page-grid"
       role="list"
       aria-label="Files to merge"
-      use:sortable={{ draggable: '.file-card', onmove: (id, to) => merge.moveFile(id, to) }}
+      use:sortable={{
+        draggable: '.file-card',
+        onmove: (id, to) => merge.moveFile(id, to),
+        onend: () => listVersion++
+      }}
     >
-      {#each files as file, i (file.id)}
-        {@const geo = geometry(file, 1, 0)}
-        <div class="file-card" role="listitem" data-id={file.id}>
-          <PageThumb
-            item={{ id: file.id, kind: 'page', src: 1, rotate: 0 }}
-            position={i + 1}
-            pdf={file.pdf}
-            docKey={file.key}
-            size={geo.size}
-            rotation={geo.rotation}
-            label="{i + 1}. {file.name}"
-            readonly
-          />
-          <span class="meta">{plural(file.info.pages.length, 'page')} · {fmtSize(file.size)}</span>
-          <button
-            class="remove"
-            title="Remove {file.name}"
-            aria-label="Remove {file.name}"
-            onclick={() => merge.removeFile(file.id)}
-          >
-            <X size={14} strokeWidth={1.75} />
-          </button>
-        </div>
-      {/each}
+      {#key listVersion}
+        {#each files as file, i (file.id)}
+          {@const geo = geometry(file, 1, 0)}
+          <div class="file-card" role="listitem" data-id={file.id}>
+            <PageThumb
+              item={{ id: file.id, kind: 'page', src: 1, rotate: 0 }}
+              position={i + 1}
+              pdf={file.pdf}
+              docKey={file.key}
+              size={geo.size}
+              rotation={geo.rotation}
+              label="{i + 1}. {file.name}"
+              readonly
+            />
+            <span class="meta">{plural(file.info.pages.length, 'page')} · {fmtSize(file.size)}</span
+            >
+            <button
+              class="remove"
+              title="Remove {file.name}"
+              aria-label="Remove {file.name}"
+              onclick={() => merge.removeFile(file.id)}
+            >
+              <X size={14} strokeWidth={1.75} />
+            </button>
+          </div>
+        {/each}
+      {/key}
     </div>
   {/if}
 
