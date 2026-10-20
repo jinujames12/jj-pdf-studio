@@ -7,9 +7,12 @@
 <p align="center">Free, offline PDF tools for Windows.</p>
 
 <p align="center">
-  <!-- TODO: replace OWNER/REPO once the GitHub repository exists -->
-  <a href="https://github.com/OWNER/REPO/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg" /></a>
-  <a href="https://github.com/OWNER/REPO/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/OWNER/REPO" /></a>
+  <a href="https://github.com/jinujames12/jj-pdf-studio/releases/latest"><b>⬇ Download for Windows</b></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/jinujames12/jj-pdf-studio/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/jinujames12/jj-pdf-studio/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="https://github.com/jinujames12/jj-pdf-studio/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/jinujames12/jj-pdf-studio" /></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue" /></a>
 </p>
 
@@ -73,7 +76,7 @@ keyboard alone (arrow keys move along the toolbar). Press **F1** in the app for 
 
 ## Download
 
-TODO: link to the latest release once v1.0.0 is published.
+**[⬇ Download the latest release](https://github.com/jinujames12/jj-pdf-studio/releases/latest)** from the GitHub Releases page, then pick a file under **Assets**:
 
 - **Portable exe** (`JJPDFStudio-<version>-portable.exe`): double-click to run, no installation.
 - **Installer** (`JJPDFStudio-<version>-setup.exe`): optional, for people who prefer one.
