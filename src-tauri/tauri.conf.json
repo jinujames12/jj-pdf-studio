@@ -46,9 +46,18 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "publisher": "JJ Global",
-    "copyright": "Copyright 2026 JJ Global",
+    "publisher": "James & James LLP",
+    "copyright": "Copyright 2026 James & James LLP",
     "license": "Apache-2.0",
+    "fileAssociations": [
+      {
+        "ext": ["pdf"],
+        "name": "PDF Document",
+        "description": "PDF Document",
+        "mimeType": "application/pdf",
+        "role": "Editor"
+      }
+    ],
     "windows": {
       "webviewInstallMode": { "type": "skip" }
     }

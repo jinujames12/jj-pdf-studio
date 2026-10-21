@@ -7,7 +7,7 @@ mod settings;
 
 use std::sync::{Arc, Mutex};
 
-use tauri::{Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow, WindowEvent};
+use tauri::{Emitter, Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow, WindowEvent};
 
 use settings::{Settings, Store, WindowState};
 
@@ -15,6 +15,22 @@ use settings::{Settings, Store, WindowState};
 #[tauri::command]
 fn ping_core() -> &'static str {
     pdf_core::version()
+}
+
+/// PDF paths from a command line (what Windows passes for "Open with" and double-click).
+fn pdf_args(args: impl Iterator<Item = String>) -> Vec<String> {
+    args.skip(1)
+        .filter(|a| !a.starts_with('-') && a.to_ascii_lowercase().ends_with(".pdf"))
+        .collect()
+}
+
+/// Files the app was launched with, handed to the frontend once it is ready.
+#[derive(Default)]
+struct LaunchFiles(Mutex<Vec<String>>);
+
+#[tauri::command]
+fn launch_files(files: State<'_, LaunchFiles>) -> Vec<String> {
+    std::mem::take(&mut *files.0.lock().unwrap())
 }
 
 /// The saved settings, read once by the frontend at startup.
@@ -100,7 +116,19 @@ fn remember_window(window: &WebviewWindow, saved: Option<WindowState>) {
 
 pub fn run() {
     tauri::Builder::default()
+        // A second launch (another "Open with") hands its files to the running window.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+            let files = pdf_args(args.into_iter());
+            if !files.is_empty() {
+                let _ = app.emit("open-files", files);
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
+        .manage(LaunchFiles(Mutex::new(pdf_args(std::env::args()))))
         .manage(commands::Allowed::default())
         .manage(commands::convert::ImageExports::default())
         .manage(jobs::Jobs::default())
@@ -116,6 +144,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ping_core,
             get_settings,
+            launch_files,
             set_theme,
             jobs::cancel_job,
             commands::pages::open_pdf,

@@ -1,6 +1,6 @@
 # JJ PDF Studio: Project Specification
 
-**Version:** 0.2 (adds security, convert and edit tools) · **Date:** 2026-10-19 · **Owner:** JJ Global
+**Version:** 0.2 (adds security, convert and edit tools) · **Date:** 2026-10-19 · **Owner:** James & James LLP
 
 A free, open source, offline Windows desktop tool for everyday PDF work: merge, split, extract, reorder, rotate, delete and insert pages, resize pages, compress, convert between images and PDF, unlock and password-protect, add page numbers and watermarks, and edit document properties. It ships as one portable `.exe` that runs without installation.
 
@@ -14,7 +14,7 @@ A free, open source, offline Windows desktop tool for everyday PDF work: merge, 
 - **Lightweight.** Target under 15 MB for the exe, under 150 MB RAM for a typical 50-page document, cold start under 2 seconds.
 - **Fully offline.** No network calls, no telemetry, no update pings. Files never leave the machine.
 - **Safe by default.** Originals are never overwritten. Every operation writes a new file (default name `original-name (edited).pdf`, user can change it).
-- **Professional, calm UI** in the JJ Global brand colour `#2C388E`, light and dark themes.
+- **Professional, calm UI** in the James & James LLP brand colour `#2C388E`, light and dark themes.
 - **Open source** on GitHub under a permissive license, with reproducible builds from GitHub Actions.
 - **Windows 10 (1809+) and Windows 11, x64.** ARM64 is a later nice-to-have.
 
@@ -41,9 +41,9 @@ A free, open source, offline Windows desktop tool for everyday PDF work: merge, 
 | Says the license gives no trademark rights | No  | **Yes (section 6)** |
 | Compatible with all dependencies below     | Yes | Yes                 |
 
-**Why Apache-2.0:** it is just as permissive as MIT, but it adds a patent grant and explicitly excludes trademark rights. That second point matters for a branded tool: anyone may fork the code, but they may not ship it as "JJ PDF Studio" with the JJ Global logo. Tauri itself is dual MIT/Apache-2.0, so this sits naturally in the ecosystem.
+**Why Apache-2.0:** it is just as permissive as MIT, but it adds a patent grant and explicitly excludes trademark rights. That second point matters for a branded tool: anyone may fork the code, but they may not ship it as "JJ PDF Studio" with the James & James LLP logo. Tauri itself is dual MIT/Apache-2.0, so this sits naturally in the ecosystem.
 
-**Logo and brand assets:** stored in `assets/brand/` with their own `assets/brand/LICENSE.md` stating "All rights reserved, JJ Global. Not covered by the project license." Add a short `TRADEMARKS.md` explaining forks must rebrand.
+**Logo and brand assets:** stored in `assets/brand/` with their own `assets/brand/LICENSE.md` stating "All rights reserved, James & James LLP. Not covered by the project license." Add a short `TRADEMARKS.md` explaining forks must rebrand.
 
 ### Dependency licenses (all permissive, no AGPL/GPL)
 
@@ -363,7 +363,7 @@ PDFs can carry two kinds of protection, and the tool explains which one a file h
 ### 5.13 Watermark / stamp
 
 - **Text watermark:** text, font size, colour, opacity, rotation (default 45°), position (centre or tiled), over or under page content.
-- **Image stamp:** a PNG or JPG (for example the JJ Global logo), size, opacity, position (corners or centre).
+- **Image stamp:** a PNG or JPG (for example the James & James LLP logo), size, opacity, position (corners or centre).
 - Page range.
 - Implementation: a Form XObject per watermark, drawn on each page from an extra content stream; opacity via an `/ExtGState` with `/ca`. "Under content" prepends the stream instead of appending it.
 - Note in the UI: a watermark added this way can be removed by someone with PDF editing tools. It is a visible label, not security.
@@ -457,7 +457,7 @@ _Shared:_
 
 ### 5.16 About
 
-- Logo, "JJ PDF Studio", version and build date, "Made by JJ Global", links to GitHub repo and issue tracker (open in default browser), license name, and a "Third-party licenses" button showing the bundled notices.
+- Logo, "JJ PDF Studio", version and build date, "Made by James & James LLP", links to GitHub repo and issue tracker (open in default browser), license name, and a "Third-party licenses" button showing the bundled notices.
 
 ---
 
@@ -514,7 +514,7 @@ If WebView2 is somehow missing (rare, for example stripped corporate images), th
 Unsigned exes show a "Windows protected your PC" warning on first run. Options:
 
 1. **SignPath Foundation** offers free code signing for qualifying open source projects. Recommended once the repo is public and has a first release.
-2. A paid OV/EV certificate (or Azure Trusted Signing) if JJ Global wants its own company name on the signature.
+2. A paid OV/EV certificate (or Azure Trusted Signing) if James & James LLP wants its own company name on the signature.
 3. Until then, document "More info → Run anyway" in the README, and IT can allow-list the exe hash.
 
 ---
@@ -600,7 +600,7 @@ Release process: update `CHANGELOG.md` and the version in `package.json`, `src-t
 7. Limitations (compress limits, no password support yet, forms after merge/resize).
 8. Building from source (link to CONTRIBUTING).
 9. Roadmap (link to milestones / GitHub Projects).
-10. License (Apache-2.0), trademarks note, third-party notices, credits ("Made by JJ Global").
+10. License (Apache-2.0), trademarks note, third-party notices, credits ("Made by James & James LLP").
 
 ### CONTRIBUTING.md
 
@@ -653,13 +653,13 @@ Please do the following:
 
 3. Add `src/styles/tokens.css` with the full light and dark token set from SPEC section 4 (brand primary #2C388E), theme following the OS with a manual toggle stored in localStorage for now. Bundle the Inter font locally (no Google Fonts). Use lucide-svelte for icons.
 
-4. Build the UI shell: custom title bar (logo + "JJ PDF Studio", theme toggle, window controls), collapsible left sidebar with the tools Merge, Pages, Split, Extract, Rotate, Resize, Compress, Images to PDF, and About at the bottom. Home screen with a tool card grid (icon, name, one-line description) and a large drop zone. Each tool route shows a placeholder view with its title and "Coming soon". About view shows logo, name, version (read from Tauri app API), "Made by JJ Global", and license. Make it look polished and calm: 4px spacing grid, 6px/10px radii, subtle shadows, 120-180ms transitions, respects prefers-reduced-motion.
+4. Build the UI shell: custom title bar (logo + "JJ PDF Studio", theme toggle, window controls), collapsible left sidebar with the tools Merge, Pages, Split, Extract, Rotate, Resize, Compress, Images to PDF, and About at the bottom. Home screen with a tool card grid (icon, name, one-line description) and a large drop zone. Each tool route shows a placeholder view with its title and "Coming soon". About view shows logo, name, version (read from Tauri app API), "Made by James & James LLP", and license. Make it look polished and calm: 4px spacing grid, 6px/10px radii, subtle shadows, 120-180ms transitions, respects prefers-reduced-motion.
 
-5. Add a placeholder logo at `assets/brand/logo.svg` (rounded square #2C388E with white "JJ") and a 1024x1024 `logo.png` generated from it, plus `assets/brand/LICENSE.md` saying brand assets are all rights reserved by JJ Global and not covered by the project license. Generate app icons with `npm run tauri icon assets/brand/logo.png`.
+5. Add a placeholder logo at `assets/brand/logo.svg` (rounded square #2C388E with white "JJ") and a 1024x1024 `logo.png` generated from it, plus `assets/brand/LICENSE.md` saying brand assets are all rights reserved by James & James LLP and not covered by the project license. Generate app icons with `npm run tauri icon assets/brand/logo.png`.
 
 6. Add a Tauri command `ping_core` that returns `pdf_core::version()` and show it in the About view, to prove the frontend -> Rust -> pdf-core path works.
 
-7. Repo files: LICENSE (Apache-2.0, copyright 2026 JJ Global), TRADEMARKS.md, README.md and CONTRIBUTING.md following the outlines in SPEC section 8 (mark unfinished parts as TODO), CODE_OF_CONDUCT.md (Contributor Covenant 2.1), SECURITY.md, CHANGELOG.md, .gitignore, .editorconfig, ESLint + Prettier config, GitHub issue templates and PR template.
+7. Repo files: LICENSE (Apache-2.0, copyright 2026 James & James LLP), TRADEMARKS.md, README.md and CONTRIBUTING.md following the outlines in SPEC section 8 (mark unfinished parts as TODO), CODE_OF_CONDUCT.md (Contributor Covenant 2.1), SECURITY.md, CHANGELOG.md, .gitignore, .editorconfig, ESLint + Prettier config, GitHub issue templates and PR template.
 
 8. Add `.github/workflows/ci.yml` and `.github/workflows/release.yml` exactly as outlined in SPEC section 7, adjusted to the real paths and script names you created. Add npm scripts: dev, build, lint, check, format, tauri, and `version` (a small node script that sets the same version in package.json, src-tauri/Cargo.toml and tauri.conf.json).
 

@@ -4,7 +4,7 @@ The source code of JJ PDF Studio is licensed under the [Apache License 2.0](LICE
 license, like all Apache-2.0 licenses, **does not grant any rights to use trademarks, service
 marks or product names** (section 6).
 
-"JJ PDF Studio", "JJ Global" and the JJ logo are the property of JJ Global. The logo and other
+"JJ PDF Studio", "James & James LLP" and the JJ logo are the property of James & James LLP. The logo and other
 files in [`assets/brand/`](assets/brand/) are all rights reserved and are not covered by the
 project license.
 
@@ -19,7 +19,7 @@ project license.
 - Distribute a modified or unmodified build under the name "JJ PDF Studio", or a name likely to
   be confused with it.
 - Use the JJ logo or any `assets/brand/` file in your fork, app icon, website or marketing.
-- Suggest that JJ Global made, endorsed or supports your fork.
+- Suggest that James & James LLP made, endorsed or supports your fork.
 
 ## Forking checklist
 

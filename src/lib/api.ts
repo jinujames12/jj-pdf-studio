@@ -64,6 +64,8 @@ export interface Settings {
   theme: 'light' | 'dark' | null;
 }
 
+/** PDFs the app was started with (Open with / double-click); empties on read. */
+export const launchFiles = () => invoke<string[]>('launch_files');
 export const getSettings = () => invoke<Settings>('get_settings');
 export const setThemeSetting = (theme: 'light' | 'dark' | null) =>
   invoke<void>('set_theme', { theme });

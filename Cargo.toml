@@ -6,7 +6,7 @@ members = ["crates/pdf-core", "src-tauri"]
 version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
-authors = ["JJ Global"]
+authors = ["James & James LLP"]
 repository = "https://github.com/jjglobal/jj-pdf-studio"
 
 # Small, self-contained release binary (see SPEC section 6).

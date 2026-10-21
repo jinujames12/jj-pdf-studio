@@ -23,7 +23,8 @@
   import { tools } from './lib/tools';
   import { onMount } from 'svelte';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
-  import { inTauri } from './lib/api';
+  import { inTauri, launchFiles } from './lib/api';
+  import { listen } from '@tauri-apps/api/event';
   import { browseForPdf, documents, openFiles } from './lib/stores/documents.svelte';
   import { dialogs } from './lib/stores/dialogs.svelte';
 
@@ -63,8 +64,14 @@
         void openFiles(p.paths);
       }
     });
+    // PDFs from "Open with" or a double-click: at startup, or from a second launch.
+    void launchFiles().then((paths) => {
+      if (paths.length) void openFiles(paths);
+    });
+    const unlistenOpen = listen<string[]>('open-files', (e) => void openFiles(e.payload));
     return () => {
       void unlisten.then((fn) => fn());
+      void unlistenOpen.then((fn) => fn());
     };
   });
 </script>
