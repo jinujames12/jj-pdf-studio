@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-10-21
+
+### Changed
+
+- About page shows the James & James LLP logo (follows the light and dark themes).
+- The installer file now uses the app icon.
+
 ## [1.0.4] - 2026-10-21
 
 ### Changed
