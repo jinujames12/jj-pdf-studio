@@ -2,16 +2,10 @@
   import { onMount } from 'svelte';
   import { getVersion } from '@tauri-apps/api/app';
   import logoUrl from '../../../assets/brand/logo.svg';
-  import companyLogoSvg from '../../../assets/brand/james-and-james-vertical.svg?raw';
+  import companyLogoUrl from '../../../assets/brand/james-and-james-vertical.svg';
   import { inTauri, openLink, pingCore } from '../api';
   import { dialogs } from '../stores/dialogs.svelte';
   import { report } from '../saved';
-
-  // Inline so the logo takes the theme colour (it is a single-colour artwork).
-  const companyLogo = companyLogoSvg
-    .replace(/<\?xml[^>]*\?>/, '')
-    .replace(/\s(width|height)="[^"]*"/g, '')
-    .replaceAll('fill="#2B3A8D"', 'fill="currentColor"');
 
   let appVersion = $state('…');
   let coreVersion = $state('…');
@@ -47,7 +41,12 @@
     <dd>Apache-2.0</dd>
   </dl>
 
-  <div class="company" role="img" aria-label="James &amp; James LLP">{@html companyLogo}</div>
+  <div
+    class="company"
+    role="img"
+    aria-label="James &amp; James LLP"
+    style:--logo="url({companyLogoUrl})"
+  ></div>
 
   <p class="privacy">Fully offline. No telemetry. Your files never leave this computer.</p>
 
@@ -97,15 +96,13 @@
     text-align: left;
     user-select: text;
   }
+  /* A mask lets the single-colour logo follow the theme colour. */
   .company {
     width: 180px;
+    aspect-ratio: 640 / 264;
     margin-top: var(--space-5, 20px);
-    color: var(--primary);
-  }
-  .company :global(svg) {
-    display: block;
-    width: 100%;
-    height: auto;
+    background: var(--primary);
+    mask: var(--logo) center / contain no-repeat;
   }
   .privacy {
     margin: var(--space-4) 0 var(--space-3);
