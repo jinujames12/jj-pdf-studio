@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.6] - 2026-10-21
+
+### Changed
+
+- About page draws the James & James LLP logo with a CSS mask (same look, no raw HTML), so the
+  lint check in CI passes.
+
 ## [1.0.5] - 2026-10-21
 
 ### Changed
