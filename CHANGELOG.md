@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-10-21
+
+### Changed
+
+- New logo and app icons (white PDF page with "JJ" on the brand blue), with light, dark, mark,
+  one-colour and horizontal variants in `assets/brand/`.
+
 ## [1.0.1] - 2026-10-21
 
 ### Fixed

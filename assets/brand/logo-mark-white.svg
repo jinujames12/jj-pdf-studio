@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="JJ PDF Studio">
+  <path d="M262 140H632L800 308V860Q800 884 776 884H262Q238 884 238 860V164Q238 140 262 140Z" fill="#FFFFFF"/>
+  <path d="M632 140L800 308H664Q632 308 632 276Z" fill="#B9C0EA"/>
+  <g fill="none" stroke="#2C388E" stroke-width="60" stroke-linejoin="round">
+    <path d="M440 380V616A88 88 0 0 1 352 704H316"/>
+    <path d="M628 380V616A88 88 0 0 1 540 704H504"/>
+  </g>
+</svg>
