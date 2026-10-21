@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] - 2026-10-21
+
+### Changed
+
+- Logo now uses the serif "J" from the James & James wordmark; the horizontal logo uses a serif
+  typeface to match. App icons regenerated.
+
 ## [1.0.2] - 2026-10-21
 
 ### Changed
