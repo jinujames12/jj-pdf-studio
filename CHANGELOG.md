@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-21
+
+### Fixed
+
+- PDFs opened with "Open with" or a double-click now open in the app instead of an empty window.
+
+### Added
+
+- The installer registers JJ PDF Studio as a PDF handler. Opening another PDF while the app is
+  running opens it in the existing window.
+
+### Changed
+
+- Publisher and copyright now read James & James LLP.
+
 ## [1.0.0] - Unreleased
 
 ### Changed
