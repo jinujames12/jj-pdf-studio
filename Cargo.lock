@@ -2063,7 +2063,7 @@ dependencies = [
 
 [[package]]
 name = "jj-pdf-studio"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "pdf-core",
  "serde",
@@ -2742,7 +2742,7 @@ dependencies = [
 
 [[package]]
 name = "pdf-core"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "image",
  "lopdf",

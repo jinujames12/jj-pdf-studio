@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-10-21
+
+### Changed
+
+- New logo and app icons: two stacked PDF pages on the brand blue. The horizontal logo reads
+  "JJ PDF Studio". All variants regenerated in `assets/brand/`.
+
 ## [1.0.3] - 2026-10-21
 
 ### Changed
